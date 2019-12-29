@@ -14,7 +14,9 @@ git clone https://github.com/asyncvlsi/SPRoute.git
 Dependencies of Galois
 
 A modern C++ compiler compliant with the C++-14 standard (GCC >= 6.1, Intel >= 17.0, LLVM >= 4.0)
+
 CMake (>= 3.2.3)
+
 Boost library ( >= 1.58.0, we recommend building/installing the full library) 
 
 Lef/Def Parser v5.8
@@ -22,11 +24,17 @@ Lef/Def Parser v5.8
 #Compile
 
 cd [Galois_Home]/lonestar/experimental/
+
 mkdir lefdef_SPRoute
+
 cp files to lefdef_SPRoute
+
 add a line to the [Galois_Home]/lonestar/experimental/CMakeList.txt: add_subdirectory(lefdef_SPRoute)
+
 change the 5 paths in CMake of lefdef_SPRoute
+
 build the whole Galois 
+
 Then you can make in lefdef_SPRoute's build directory
 
 
