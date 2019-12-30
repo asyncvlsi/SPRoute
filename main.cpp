@@ -1094,6 +1094,74 @@ void readLef(dbDatabase* db)
 
 #endif
 
+void updateDefGcellGrid(int xtrack_step, int ytrack_step)
+{
+    parser::GcellGrid tmpGcellGrid_x, tmpGcellGrid_x1, tmpGcellGrid_y, tmpGcellGrid_y1;
+    int xgcell_step = xtrack_step * 15;
+    int ygcell_step = ytrack_step * 15;
+    tmpGcellGrid_x.start = defDB.dieArea.lowerLeft.x;
+    tmpGcellGrid_x.numBoundaries = (defDB.dieArea.upperRight.x - defDB.dieArea.lowerLeft.x) / xgcell_step + 1;
+    tmpGcellGrid_x.step = xgcell_step;
+    tmpGcellGrid_x.direction = "X" ;
+
+    tmpGcellGrid_y.start = defDB.dieArea.lowerLeft.y;
+    tmpGcellGrid_y.numBoundaries = (defDB.dieArea.upperRight.y - defDB.dieArea.lowerLeft.y) / ygcell_step + 1;
+    tmpGcellGrid_y.step = ygcell_step;
+    tmpGcellGrid_y.direction = "Y" ;
+
+    tmpGcellGrid_x1.start = tmpGcellGrid_x.start + tmpGcellGrid_x.step * (tmpGcellGrid_x.numBoundaries - 1);
+    tmpGcellGrid_x1.numBoundaries = 2;
+    tmpGcellGrid_x1.step = defDB.dieArea.upperRight.x - tmpGcellGrid_x1.start;
+    tmpGcellGrid_x1.direction = "X" ;
+
+    tmpGcellGrid_y1.start = tmpGcellGrid_y.start + tmpGcellGrid_y.step * (tmpGcellGrid_y.numBoundaries - 1);
+    tmpGcellGrid_y1.numBoundaries = 2;
+    tmpGcellGrid_y1.step = defDB.dieArea.upperRight.y - tmpGcellGrid_y1.start;
+    tmpGcellGrid_y1.direction = "Y" ;
+
+    cout << "GCELLGRID TO BE ADDED: " << endl;
+    cout << "GCELLGRID X " << tmpGcellGrid_x.start << " DO " << tmpGcellGrid_x.numBoundaries << " STEP " << tmpGcellGrid_x.step << endl;
+    cout << "GCELLGRID X " << tmpGcellGrid_x1.start << " DO " << tmpGcellGrid_x1.numBoundaries << " STEP " << tmpGcellGrid_x1.step << endl;
+    cout << "GCELLGRID Y " << tmpGcellGrid_y.start << " DO " << tmpGcellGrid_y.numBoundaries << " STEP " << tmpGcellGrid_y.step << endl;
+    cout << "GCELLGRID Y " << tmpGcellGrid_y1.start << " DO " << tmpGcellGrid_y1.numBoundaries << " STEP " << tmpGcellGrid_y1.step << endl;
+
+    defDB.gcellGrids.push_back(tmpGcellGrid_x);
+    defDB.gcellGrids.push_back(tmpGcellGrid_x1);
+
+    defDB.gcellGrids.push_back(tmpGcellGrid_y);
+    defDB.gcellGrids.push_back(tmpGcellGrid_y1);
+};
+
+void generateGcellGrid()
+{
+    int xtrack_step = 0, ytrack_step = 0;
+    string routing_layer_name;
+    for(auto layer : lefDB.layers)
+    {
+        if(layer.type == "ROUTING")
+        {
+            cout << "layer for gcell: " << layer.name << endl;
+            routing_layer_name = layer.name;
+            for(auto track : defDB.tracks)
+            {
+                for(auto layerName : track.layerNames)
+                {
+                    if(layerName == layer.name && track.direction == "Y")
+                        ytrack_step = track.step;
+
+                    if(layerName == layer.name && track.direction == "X")
+                        xtrack_step = track.step;
+                }
+            }
+            break;
+        }
+    }
+    cout << "for GcellGrid xtrack_step: " << xtrack_step << "ytrack_step: " << ytrack_step << endl;
+
+    updateDefGcellGrid(xtrack_step, ytrack_step);
+
+}
+
 void initGcell()
 {
     bool enableOutput = false;
@@ -1102,6 +1170,9 @@ void initGcell()
     Point2D<int> maxBoundaryCnt;
     maxBoundaryCnt.x = 0;
     maxBoundaryCnt.y = 0;
+    if(defDB.gcellGrids.size() == 0)
+        generateGcellGrid();
+    
     for(auto gcellGrid : defDB.gcellGrids)
     {
         if(gcellGrid.direction == "X")
