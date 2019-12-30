@@ -10,7 +10,7 @@ parser::defDataBase defDB;
 parser::lefDataBase lefDB;
 
 #define GLOBAL_CAP_REDUCTION 4
-#define CAP_ADJ_FACTOR 0.8
+#define CAP_ADJ_FACTOR 0.9
 
 int GLOBAL_CAP_ADJ(int x)
 {
