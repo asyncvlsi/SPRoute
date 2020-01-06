@@ -1999,7 +1999,7 @@ int main(int argc, char** argv)
     }
     if(defFileName.size() == 0 || defFileName.size() == 0 || outFileName.size() == 0)
     {
-        cout << "usage: lefdef_SPRoute -lef [LefFile] -def [DefFile] -t [nthreads] -output [Output file]" << endl;
+        cout << "usage: ./lefdef_SPRoute -lef [LefFile] -def [DefFile] -t [nthreads] -output [Output file]" << endl;
         exit(1);
     }
     cout << "reading lef: " << lefFileName <<endl;
