@@ -48,6 +48,7 @@ cd build
 cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_EXP=true
 cd lonestar/experimental/lefdef_SPRoute
 make
+```
 
 Usage
 ===================
