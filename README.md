@@ -1,9 +1,9 @@
 # SProute
-====================
+
 SPRoute: A parallel global router using the Galois framework
 SPRoute exploits nested parallelism by a novel hybrid algorithm for parallelization. It combines net-level parallelism in which each thread works on a net, and a fine-grain parallelism which route individual nets in parallel. In fine-grain parallelism, parallelization is through exloration of multiple path. 
 
-This is Lef/Def based version.
+This is a Lef/Def based version.
 
 Cloning SPRoute
 ====================
@@ -29,20 +29,25 @@ Lef/Def Parser v5.8
 Compile
 ====================
 
+```Shell
 cd [Galois_Home]/lonestar/experimental/
-
 mkdir lefdef_SPRoute
-
-cp SPRoute files to lefdef_SPRoute
-
-add a line to the [Galois_Home]/lonestar/experimental/CMakeList.txt: add_subdirectory(lefdef_SPRoute)
-
+cp [SPRoute files] to lefdef_SPRoute
+```
+add a line to the [Galois_Home]/lonestar/experimental/CMakeList.txt: 
+```Shell
+add_subdirectory(lefdef_SPRoute)
+```
 change the 5 dependency paths of CMakeList.txt in lefdef_SPRoute
 
-build the whole Galois 
-
-Then you can make in lefdef_SPRoute's build directory
-
+build the whole Galois by
+```Shell
+cd [Galois_Home]
+mkdir build
+cd build
+cmake .. -DCMAKE_BUILD_TYPE=Release -DUSE_EXP=true
+cd lonestar/experimental/lefdef_SPRoute
+make
 
 Usage
 ===================
