@@ -26,6 +26,8 @@ Boost library ( >= 1.58.0, we recommend building/installing the full library)
 
 Lef/Def Parser v5.8
 
+The FLUTE file: POST9.dat POWV9.dat
+
 Compile
 ====================
 
