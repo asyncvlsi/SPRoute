@@ -227,7 +227,7 @@ struct THREAD_LOCAL_STORAGE
             inRegion_p_LA = largeMallocLocal(yGrid * sizeof(bool*));
             inRegion_p = reinterpret_cast<bool**> (inRegion_p_LA.get());
 
-            netEO_p_LA = largeMallocLocal(2000 * sizeof(OrderNetEdge));
+            netEO_p_LA = largeMallocLocal(MAXNETDEG * sizeof(OrderNetEdge));
             netEO_p = reinterpret_cast<OrderNetEdge*> (netEO_p_LA.get());
         }
         else
@@ -259,7 +259,7 @@ struct THREAD_LOCAL_STORAGE
             inRegion_alloc = (bool*)calloc(yGrid*xGrid, sizeof(bool));
             inRegion_p = (bool**)calloc(yGrid, sizeof(bool*));
 
-            netEO_p = (OrderNetEdge*)calloc(2000, sizeof(OrderNetEdge));
+            netEO_p = (OrderNetEdge*)calloc(MAXNETDEG, sizeof(OrderNetEdge));
         }
         //printf("allocation success\n");
         for(int i = 0; i < yGrid; i++)
