@@ -18,6 +18,11 @@ Dependencies
 
 Dependencies of Galois
 
+Checkout the lastest Galois: 
+```Shell
+https://github.com/IntelligentSoftwareSystems/Galois.git
+```
+
 A modern C++ compiler compliant with the C++-14 standard (GCC >= 6.1, Intel >= 17.0, LLVM >= 4.0)
 
 CMake (>= 3.2.3)
