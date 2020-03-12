@@ -56,7 +56,7 @@ public:
 	void setCongestion(int layer, int x, int y, bool horizontal, float cong) {
 		if(horizontal) {
 			int grid = y*(xGrid-1) + x + layer*(xGrid-1)*yGrid;
-			cout << x << " " << y << " " << layer << " " << cong << endl;
+			//cout << x << " " << y << " " << layer << " " << cong << endl;
 			hCongestion[grid] = cong;
 		}
 		else {
