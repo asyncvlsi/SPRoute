@@ -1042,8 +1042,18 @@ void readDef(dbDatabase* db)
 {
     dbChip* chip = db->getChip();
     dbBlock* chipBlock = chip->getBlock();
+    dbTech* tech = db->getTech();
 
     dbDefDieArea(chipBlock);
+    
+    dbDefUnits(tech);
+    dbDefTracks(chipBlock);
+   
+    dbDefGcellGrids(chipBlock);
+    
+    dbDefComponents(chipBlock);
+
+
     /*defrSetDesignCbk(getDefString);
     defrSetDesignEndCbk(getDefVoid);
     defrSetDieAreaCbk(getDefDieArea);
@@ -2035,14 +2045,15 @@ int main(int argc, char** argv)
 
     linkTrackToLayer();
     preprocessSpacingTable();
-
+    
     preprocessComponent(); 
     initGcell();
-
+    
     GraphTemplate* graphTemplates;
     graphTemplates = new GraphTemplate [2 * 2 * defDB.gcellGridDim.z];
 
-    genGraphTemplate(graphTemplates);
+    //genGraphTemplate(graphTemplates);
+    
     preprocessSNet();
 
     preprocessDesignRule();
@@ -2055,7 +2066,11 @@ int main(int argc, char** argv)
 
     delete [] graphTemplates;
 
-    runFastRoute(grGen, outFileName);
+    CongestionMap congestionMap(grGen.grid.z, grGen.grid.x, grGen.grid.y);
+
+    runFastRoute(grGen, outFileName, congestionMap, 500);
+
+
 
 #endif
     

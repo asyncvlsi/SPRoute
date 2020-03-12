@@ -3606,7 +3606,7 @@ int getOverflow2D( int* maxOverflow)
 
 
 
-int getOverflow3D( void )
+int getOverflow3D( parser::CongestionMap& congestionMap)
 {
     int i, j, k, grid, overflow, max_overflow, H_overflow, max_H_overflow, V_overflow, max_V_overflow;
     int H_usage, V_usage, cap;
@@ -3630,6 +3630,11 @@ int getOverflow3D( void )
 				overflow =  h_edges3D[grid].usage - h_edges3D[grid].cap;
 				cap +=h_edges3D[grid].cap;
 
+                if(h_edges3D[grid].cap != 0) 
+                    congestionMap.setCongestion(k, j, i, true, (float)h_edges3D[grid].usage/(float)h_edges3D[grid].cap );
+                else 
+                    congestionMap.setCongestion(k, j, i, true, 1 );
+
 				if(overflow>0)
 				{
 					H_overflow += overflow;
@@ -3646,6 +3651,11 @@ int getOverflow3D( void )
 				total_usage += v_edges3D[grid].usage;
 				overflow = v_edges3D[grid].usage - v_edges3D[grid].cap;
 				cap +=v_edges3D[grid].cap;
+
+                if(v_edges3D[grid].cap != 0) 
+                    congestionMap.setCongestion(k, j, i, false, (float)v_edges3D[grid].usage/(float)v_edges3D[grid].cap );
+                else 
+                    congestionMap.setCongestion(k, j, i, false, 1 );
 
 				if(overflow>0)
 				{

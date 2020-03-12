@@ -26,6 +26,46 @@ int find_Gcell(int pin_in, std::vector<int> GcellBoundaries)
 	return x;
 }
 
+class CongestionMap {
+	float* hCongestion;
+	float* vCongestion;
+	int xGrid;
+	int yGrid;
+	int numLayers;
+public:
+	CongestionMap(int numLayers, int xGrid, int yGrid) {
+		this->xGrid = xGrid;
+		this->yGrid = yGrid;
+		this->numLayers = numLayers;
+		hCongestion = new float [numLayers * (xGrid - 1) * yGrid];
+		vCongestion = new float [numLayers * xGrid * (yGrid - 1)];
+
+	};
+
+	float getCongestion(int layer, int x, int y, bool horizontal) {
+		if(horizontal) {
+			int grid = y*(xGrid-1) + x + layer*(xGrid-1)*yGrid;
+			return hCongestion[grid];
+		}
+		else {
+			int grid = y*xGrid + x + layer*xGrid*(yGrid - 1);
+			return vCongestion[grid];
+		}
+	}
+
+	void setCongestion(int layer, int x, int y, bool horizontal, float cong) {
+		if(horizontal) {
+			int grid = y*(xGrid-1) + x + layer*(xGrid-1)*yGrid;
+			cout << x << " " << y << " " << layer << " " << cong << endl;
+			hCongestion[grid] = cong;
+		}
+		else {
+			int grid = y*xGrid + x + layer*xGrid*(yGrid - 1);
+			vCongestion[grid] = cong;
+		}
+	}
+};
+
 class grNet
 {
 public:

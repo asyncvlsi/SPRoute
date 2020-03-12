@@ -596,7 +596,7 @@ void readGR(parser::grGenerator& grGen)
 }
 
 
-void runFastRoute(parser::grGenerator grGen, string OutFileName)
+void runFastRoute(parser::grGenerator grGen, string OutFileName, parser::CongestionMap& congestionMap, int maxMazeRound = 500)
 {
 //    char benchFile[FILESTRLEN];
     char routingFile[STRINGLEN];
@@ -713,7 +713,7 @@ void runFastRoute(parser::grGenerator grGen, string OutFileName)
 	updateType = 0;
 	LVIter = 3;
 	extremeNeeded = FALSE;
-	mazeRound = 500;
+	mazeRound = maxMazeRound;
 	bmfl = BIG_INT;
 	minofl = BIG_INT;
 
@@ -1013,18 +1013,18 @@ void runFastRoute(parser::grGenerator grGen, string OutFileName)
 				if(!finegrain && nthreads_tmp != 1)
 				{
 					thread_livelock++;
-					if(thread_livelock == thread_livelock_limit[thread_choice])
+					if(thread_livelock == 1)
 					{
 						thread_choice++;
 						thread_livelock = 0;
-                        if(thread_steps[thread_choice] == 1) {
-						    galois::setActiveThreads(min(6, nthreads_tmp));
+                        if(nthreads_tmp < 6) {
+						    galois::setActiveThreads(nthreads_tmp);
                             finegrain = true;
                         }
                         else
-							galois::setActiveThreads(min(thread_steps[thread_choice], nthreads_tmp));
+							galois::setActiveThreads(nthreads_tmp / 2);
 					}
-					cout << "nthreads :" <<	min(thread_steps[thread_choice], nthreads_tmp) << " live lock cnt: " << thread_livelock << endl;
+					cout << "nthreads :" <<	nthreads_tmp << " live lock cnt: " << thread_livelock << endl;
 				}
 			}
 			extrarun = false;
@@ -1221,7 +1221,7 @@ void runFastRoute(parser::grGenerator grGen, string OutFileName)
 		}
 		
 		fillVIA();
-		finallength = getOverflow3D();
+		finallength = getOverflow3D(congestionMap);
 		numVia= threeDVIA ();
 		checkRoute3D();
 		if (needOUTPUT) {
