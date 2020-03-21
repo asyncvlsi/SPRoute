@@ -1018,15 +1018,18 @@ void runFastRoute(parser::grGenerator grGen, string OutFileName, parser::Congest
 						thread_choice++;
 						thread_livelock = 0;
                         if(nthreads_tmp < 6) {
-						    galois::setActiveThreads(nthreads_tmp);
+						    galois::setActiveThreads(4);
+                            numThreads = 4;
                             finegrain = true;
                         }
-                        else
-							galois::setActiveThreads(nthreads_tmp / 2);
+                        else {
+                            numThreads = numThreads / 2;
+							galois::setActiveThreads(numThreads);
+                        }
 					}
-					cout << "nthreads :" <<	nthreads_tmp << " live lock cnt: " << thread_livelock << endl;
 				}
 			}
+            cout << "nthreads :" << numThreads << endl;
 			extrarun = false;
 
 
