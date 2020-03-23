@@ -31,7 +31,7 @@ Boost library ( >= 1.58.0, we recommend building/installing the full library)
 
 Lef/Def Parser v5.8
 
-The FLUTE file: POST9.dat POWV9.dat
+The FLUTE files: POST9.dat POWV9.dat (download flute-3.1.tgz from http://home.eng.iastate.edu/~cnchu/flute.html and copy POST9.dat & POWV9.dat to work directory) 
 
 Compile
 ====================
