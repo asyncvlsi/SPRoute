@@ -1,5 +1,8 @@
-
 #include "defDataBase.h"
+
+extern parser::lefDataBase lefDB;
+extern parser::defDataBase defDB;
+
 namespace parser
 {
 
@@ -903,11 +906,142 @@ int getDefGcell(defrCallbackType_e type, defiGcellGrid* gcellGrid, defiUserData 
     return 0;
 }
 
-
-/*void dbDefDieArea(odb::dbBlock* chipBlock)
+#ifdef OPENDB
+using namespace odb;
+void dbDefDieArea(odb::dbBlock* chipBlock)
 {
     cout << "chipname : " << chipBlock->getConstName() << endl;
     cout << "defdbu: " << chipBlock->getDbUnitsPerMicron() << endl;
-    //cout << "dieArea: " << chipBlock->getDieArea() << endl;
-}*/
+    //
+    //
+    adsRect rect;
+    chipBlock->getDieArea(rect);
+    cout << "dieArea: ( " <<  rect.xMin() << " , " << rect.yMin() <<  " ) ( " << rect.xMax() << " , " << rect.yMax() << " ) " << endl;
+
+
+    defDB.dieArea.lowerLeft.x = rect.xMin();
+    defDB.dieArea.lowerLeft.y = rect.yMin();
+    defDB.dieArea.upperRight.x = rect.xMax();
+    defDB.dieArea.upperRight.y = rect.yMax();
+}
+
+void dbDefUnits(dbTech* tech)
+{
+   defDB.dbuPerMicro = tech->getDbUnitsPerMicron(); 
+}
+
+void dbDefTracks(dbBlock* chipBlock)
+{
+    for(auto trackGrid : chipBlock->getTrackGrids())
+    {
+        assert(trackGrid->getNumGridPatternsX()); 
+        assert(trackGrid->getNumGridPatternsY());
+        cout << "numX: " <<  trackGrid->getNumGridPatternsX()  << "numY: " << trackGrid->getNumGridPatternsY() << endl;
+        parser::Track tmpTrackX;
+        parser::Track tmpTrackY;
+        tmpTrackX.direction = "X";
+        tmpTrackY.direction = "Y";
+        trackGrid->getGridPatternX(0, tmpTrackX.start, tmpTrackX.numTracks, tmpTrackX.step); 
+        trackGrid->getGridPatternY(0, tmpTrackY.start, tmpTrackY.numTracks, tmpTrackY.step); 
+
+        cout << tmpTrackX.start << " " << tmpTrackX.numTracks << " " << tmpTrackX.step << endl;
+        cout << tmpTrackY.start << " " << tmpTrackY.numTracks << " " << tmpTrackY.step << endl;
+
+        auto techLayer = trackGrid->getTechLayer();
+        string layerName = techLayer->getConstName();
+
+        tmpTrackX.layerNames.push_back(layerName);
+        tmpTrackY.layerNames.push_back(layerName);
+
+        defDB.tracks.push_back(tmpTrackX);
+        defDB.tracks.push_back(tmpTrackY);
+    }
+}
+
+void dbDefGcellGrids(dbBlock* chipBlock)
+{
+    dbGCellGrid* gcellGrid = chipBlock->getGCellGrid();
+    if(gcellGrid == NULL)
+    {
+        cout << " NO GCELLGRID SPECIFIED IN DEF, WILL GENERATE IN SPROUTE ITSELF" << endl;
+        return;
+    }
+    cout << "grid num X : " << gcellGrid->getNumGridPatternsX() << " grid num Y: " << gcellGrid->getNumGridPatternsY() << endl;
+    
+    for(int i = 0; i < gcellGrid->getNumGridPatternsX(); i++)
+    {
+        parser::GcellGrid tmpGcellGrid;
+        tmpGcellGrid.direction = "X";
+        gcellGrid->getGridPatternX(i, tmpGcellGrid.start, tmpGcellGrid.numBoundaries, tmpGcellGrid.step); 
+
+        cout << tmpGcellGrid.start << " " << tmpGcellGrid.numBoundaries << " " << tmpGcellGrid.step << endl;
+
+
+        defDB.gcellGrids.push_back(tmpGcellGrid);
+    }
+    
+    for(int i = 0; i < gcellGrid->getNumGridPatternsY(); i++)
+    {
+        parser::GcellGrid tmpGcellGrid;
+        tmpGcellGrid.direction = "Y";
+        gcellGrid->getGridPatternY(i, tmpGcellGrid.start, tmpGcellGrid.numBoundaries, tmpGcellGrid.step); 
+
+        cout << tmpGcellGrid.start << " " << tmpGcellGrid.numBoundaries << " " << tmpGcellGrid.step << endl;
+
+
+        defDB.gcellGrids.push_back(tmpGcellGrid);
+    }
+}
+
+void dbDefComponents(dbBlock* chipBlock)
+{
+    cout << " Bterms size: " << chipBlock->getBTerms().size() << endl;
+    /*for(auto bTerm : chipBlock->getBTerms()) //IO PIN
+    {
+       
+    }*/
+    cout << " Iterms size: " << chipBlock->getITerms().size() << endl;
+    for(auto iTerm : chipBlock->getITerms())
+    {
+
+    }
+
+    cout << " Insts size: " << chipBlock->getInsts().size() << endl;
+    
+    for(auto comp : chipBlock->getInsts())
+    {
+        auto master = comp->getMaster();
+        if(string(master->getConstName()) == "MEM1" || string(master->getConstName()) == "MEM2")
+        {
+            cout << "Comp: " << comp->getConstName() << " master: " << master->getConstName() << endl;
+            int orig_x, orig_y; 
+            comp->getOrigin(orig_x, orig_y);
+            cout << "origin: " << orig_x << " " << orig_y << endl;
+            
+            cout << "orient: " << comp->getOrient().getValue() << endl;
+            int loc_x, loc_y;
+            comp->getLocation(loc_x, loc_y);
+            cout << "loc: " << loc_x << " " << loc_y << endl;
+            auto BBox = comp->getBBox();
+            cout << "OBS size: " << comp->getMaster()->getObstructions().size() << endl;
+            for(auto obs : comp->getMaster()->getObstructions())
+            {
+                cout << obs->xMin() << " " << obs->yMin() << " " << obs->xMax() << " " << obs->yMax() << " " << obs->getTechLayer()->getConstName() << endl;
+            }
+        }
+    }
+    cout << " Obstruction size: " << chipBlock->getObstructions().size() << endl;
+    assert(chipBlock->getObstructions().size() == 0);
+
+    cout << " Blockage size: " << chipBlock->getBlockages().size() << endl;
+    assert(chipBlock->getBlockages().size() == 0);
+    cout << " Net size: " << chipBlock->getNets().size() << endl;
+
+    
+
+    cout << " Via size: " << chipBlock->getVias().size() << endl;
+    assert(chipBlock->getVias().size() == 0);
+}
+
+#endif
 

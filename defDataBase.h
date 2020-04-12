@@ -452,5 +452,12 @@ int getDefSNets(defrCallbackType_e , defiNet* , defiUserData );
 int getDefVias(defrCallbackType_e , defiVia* , defiUserData );
 int getDefGcell(defrCallbackType_e , defiGcellGrid* , defiUserData );
 
-//void dbDefDieArea(odb::dbBlock* );
+#ifdef OPENDB
+void dbDefDieArea(odb::dbBlock* );
+void dbDefUnits(odb::dbTech* );
+void dbDefTracks(odb::dbBlock* );
+void dbDefGcellGrids(odb::dbBlock* );
+void dbDefComponents(odb::dbBlock* );
+#endif
+
 #endif

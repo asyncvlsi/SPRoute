@@ -516,6 +516,7 @@ int genGraphTemplateGcell(int x, int y, int z, GraphTemplate& graphTemplate, boo
         midBoundary = defDB.yGcellBoundaries.at(y + 1);
     }
     else{
+        
         cout << "unknown layer direction: " << lefDB.layers.at(z * 2).name << endl;
         exit(1);
     }

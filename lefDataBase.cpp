@@ -1201,7 +1201,9 @@ int getLefViaGenerateRules(lefrCallbackType_e type, lefiViaRule* viaRule, lefiUs
   return 0;
 }
 
-/*using namespace odb;
+
+#ifdef OPENDB
+using namespace odb;
 void dbLefLayers(odb::dbTech* tech)
 {
 
@@ -1261,7 +1263,7 @@ void dbLefLayers(odb::dbTech* tech)
                 cout << endl;
             }
             cout << "little try: " << dbLayer->getSpacing(1600, 1000) << endl;
-        }
+        }*/
 
         parser::Layer tmpLayer;
         tmpLayer.name = layerName;
@@ -1299,19 +1301,22 @@ void dbLefMacros(odb::dbLib* lib)
             parser::Pin tmpPin;
             tmpPin.name = dbMTerm->getConstName();
 
-            cout << " " << dbMTerm->getConstName() << endl;
+            //cout << " " << dbMTerm->getConstName() << endl;
             for(auto dbMPin : dbMTerm->getMPins()) //actually one pin per term, don't know why, maybe useful in def.
             {
                 for(auto dbBox : dbMPin->getGeometry())
                 {
-                    parser::Rect3D<int> rect;
+                    parser::Rect2D<float> rect;
                     rect.lowerLeft.x = dbBox->xMin();
                     rect.lowerLeft.y = dbBox->yMin();
-                    rect.lowerLeft.z = lefDB.layer2idx.find(dbBox->getTechLayer()->getConstName());
+                    //rect.lowerLeft.z = lefDB.layer2idx.find(dbBox->getTechLayer()->getConstName())->second;
                     rect.upperRight.x = dbBox->xMax();
                     rect.upperRight.y = dbBox->yMax();
-                    rect.upperRight.z = lefDB.layer2idx.find(dbBox->getTechLayer()->getConstName());
-                    tmpPin.layerRects.push_back(rect);
+                    //rect.upperRight.z = lefDB.layer2idx.find(dbBox->getTechLayer()->getConstName())->second;
+                    parser::LayerRect tmpLayerRect;
+                    tmpLayerRect.layerName = dbBox->getTechLayer()->getConstName();
+                    tmpLayerRect.rects.push_back(rect);
+                    tmpPin.layerRects.push_back(tmpLayerRect);
                     //cout << " pin shape: " << dbBox->xMin() << " " << dbBox->yMin() << " " << dbBox->xMax() << " " << dbBox->yMax() << " " << dbBox->getTechLayer()->getConstName() << endl;
                 }
             }
@@ -1319,27 +1324,32 @@ void dbLefMacros(odb::dbLib* lib)
             // {
             //     cout << " target layer: " << dbTarget->getTechLayer()->getConstName() << endl;
             //     cout << " adsPoint: " << dbTarget->getPoint().getX() << " " << dbTarget->getPoint().getX() << endl;
-            // }          
+            // }
+            tmpMacro.pins.push_back(tmpPin);
         }
 
         for(auto dbOBS : dbMacro->getObstructions())
         {
-            parser::Rect3D<int> rect;
+            parser::Rect2D<float> rect;
             rect.lowerLeft.x = dbOBS->xMin();
             rect.lowerLeft.y = dbOBS->yMin();
-            rect.lowerLeft.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
+            //rect.lowerLeft.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
             rect.upperRight.x = dbOBS->xMax();
             rect.upperRight.y = dbOBS->yMax();
-            rect.upperRight.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
-            tmpPin.layerRects.push_back(rect);
+            //rect.upperRight.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
+            parser::LayerRect tmpLayerRect;
+            tmpLayerRect.layerName = dbOBS->getTechLayer()->getConstName();
+            tmpLayerRect.rects.push_back(rect);
+            tmpMacro.obs.layerRects.push_back(tmpLayerRect);
             //cout << " OBS: " << dbOBS->xMin() << " " << dbOBS->yMin() << " " << dbOBS->xMax() << " " << dbOBS->yMax() << " " << dbOBS->getTechLayer()->getConstName() << endl;
         }
+    
+        int macroIdx = lefDB.macros.size();
+        //tmpMacro.idx = macroIdx;
+        lefDB.macro2idx.insert( pair<string, int> (tmpMacro.name, macroIdx));
+        lefDB.macros.push_back(tmpMacro);
     }
 
-    int macroIdx = lefDB.macros.size();
-    tmpMacro.idx = macroIdx;
-    lefDB.macro2idx.insert( pair<string, int> (tmpMacro.name, macroIdx));
-    lefDB.macros.push_back(tmpMacro);
 }
 
 
@@ -1349,26 +1359,32 @@ void dbLefVias(odb::dbTech* tech)
 
     for(auto dbTechVia : tech->getVias())
     {
-        parser::Via tmpVia;
+        parser::lefVia tmpVia;
         tmpVia.name = dbTechVia->getConstName();
         for(auto dbBox : dbTechVia->getBoxes())
         {
-            parser::Rect3D rect;
-            rect.lowerLeft.x = dbOBS->xMin();
-            rect.lowerLeft.y = dbOBS->yMin();
-            rect.lowerLeft.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
-            rect.upperRight.x = dbOBS->xMax();
-            rect.upperRight.y = dbOBS->yMax();
-            rect.upperRight.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
-            tmpVia.layerRects.push_back(rect);
-            cout << " pin shape: " << dbBox->xMin() << " " << dbBox->yMin() << " " << dbBox->xMax() << " " << dbBox->yMax() << " " << dbBox->getTechLayer()->getConstName() << endl;
+            parser::Rect2D<float> rect;
+            rect.lowerLeft.x = dbBox->xMin();
+            rect.lowerLeft.y = dbBox->yMin();
+            //rect.lowerLeft.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
+            rect.upperRight.x = dbBox->xMax();
+            rect.upperRight.y = dbBox->yMax();
+            //rect.upperRight.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
+            parser::LayerRect tmpLayerRect;
+            tmpLayerRect.layerName = dbBox->getTechLayer()->getConstName();
+            tmpLayerRect.rects.push_back(rect);
+            
+            
+            tmpVia.layerRects.push_back(tmpLayerRect);
+            //cout << " pin shape: " << dbBox->xMin() << " " << dbBox->yMin() << " " << dbBox->xMax() << " " << dbBox->yMax() << " " << dbBox->getTechLayer()->getConstName() << endl;
         }
 
+        int viaIdx = lefDB.vias.size();
+        //tmpVia.idx = viaIdx;
+        lefDB.lefVia2idx.insert( pair<string, int> (tmpVia.name, viaIdx));
+        lefDB.vias.push_back(tmpVia); 
     }
-    int viaIdx = lefDB.vias.size();
-    tmpVia.idx = viaIdx;
-    lefDB.via2idx.insert( pair<string, int> (tmpVia.name, viaIdx));
-    lefDB.vias.push_back(tmpVia);
+    
 }
 
 void dbLefViaRules(odb::dbTech* tech)
@@ -1389,7 +1405,6 @@ void dbLefViaGenerateRules(odb::dbTech* tech)
     for(auto dbTechViaGenerateRule : tech->getViaGenerateRules())
     {
         cout << dbTechViaGenerateRule->getName() << endl;
-
-        
     }
-}*/
+}
+#endif

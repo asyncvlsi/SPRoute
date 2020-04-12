@@ -327,7 +327,7 @@ void readFile(char benchFile[])
     } // loop i
     printf("the total net number is %d\n\n",net);
 
-    if((pinInd>1)&&(pinInd<1000000)) //for ICCAD 2019
+    if((pinInd>1)&&(pinInd<MAXNETDEG)) //for ICCAD 2019
     {
 		seglistIndex[newnetID] = segcount; // the end pointer of the seglist
     }

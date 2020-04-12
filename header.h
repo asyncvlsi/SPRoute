@@ -23,9 +23,11 @@
 #include "galois/Galois.h"
 #include "Lonestar/BoilerPlate.h"
 
-//#include "db.h"
-//#include "defin.h"
-//#include "lefin.h"
+/*#ifdef OPENDB
+#include "db.h"
+#include "defin.h"
+#include "lefin.h"
+#endif*/
 
 using namespace std;
 

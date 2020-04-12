@@ -930,7 +930,7 @@ void newLayerAssignmentV4()
 
 	int zigP[MAXLEN], dirZig[MAXLEN],numZig, curX, nextX, preD, curD, zigHead, zigTail, preBH, preBV, n1a, n2a;
 	int quehead, quetail, numNodes;
-	int edgeQueue[5000];
+	int edgeQueue[50000];
 	int nodeIndex[5000];
 	int trash;
 	int sumcheck = 0;
@@ -1820,14 +1820,8 @@ void writeRoute3D(char routingfile3D[], parser::grGenerator grGen)
 	{
 		string netName(nets[netID]->name);
 		bool print = false;
-		if(netName == "net71037")
-		{
-			cout << "net71037: " << endl;
-			print = true;
-		}
-		fprintf(fp, "%s\n", nets[netID]->name);
-		fprintf(fp, "(\n");
-		treeedges=sttrees[netID].edges;
+		
+        treeedges=sttrees[netID].edges;
 		deg=sttrees[netID].deg;
 		
 		nodes = sttrees[netID].nodes;
@@ -1844,8 +1838,10 @@ void writeRoute3D(char routingfile3D[], parser::grGenerator grGen)
 
 			for (int layer = botL; layer <= topL; layer++) //this is not good, assuming all pins are on botL layer.
 			{
-				routedGrid.insert(Point3D(p.x, p.y, layer));
-			}
+				assert(p.x < xGrid && p.y < yGrid);
+                routedGrid.insert(Point3D(p.x, p.y, layer));
+			    
+            }
 		}
 
 
@@ -1882,6 +1878,7 @@ void writeRoute3D(char routingfile3D[], parser::grGenerator grGen)
 			for (int layer = nodes[i].botL; layer <= nodes[i].topL; layer++) //this is not good, assuming all pins are on botL layer.
 			{
 
+				assert(nodes[i].x < xGrid && nodes[i].y < yGrid);
 				routedGrid.insert(Point3D(nodes[i].x, nodes[i].y, layer));
 				/*auto it = defDB.xGcellBoundaries.begin();
 				std::advance(it, nodes[i].x);

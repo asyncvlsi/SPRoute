@@ -284,6 +284,10 @@ public:
             						int xmax = find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
             						int ymax = find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
 
+                                    xmin = (xmin < 0)? 0 : xmin;
+                                    ymin = (ymin < 0)? 0 : ymin;
+                                    xmax = (xmax >= grid.x)? grid.x - 1: xmax;
+                                    ymax = (ymax >= grid.y)? grid.y - 1: ymax;
             						//if(xmin != xmax || ymin != ymax)
             						//	cout << "Pin covers two gcells: " << net.name << " " << component.name << "/" << pin.name << endl;
 

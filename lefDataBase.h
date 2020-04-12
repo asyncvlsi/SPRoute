@@ -492,12 +492,14 @@ int getLefLayers(lefrCallbackType_e , lefiLayer* , lefiUserData );
 int getLefVias(lefrCallbackType_e , lefiVia* , lefiUserData );
 int getLefViaGenerateRules(lefrCallbackType_e , lefiViaRule* , lefiUserData );
 
-/*void dbLefLayers(odb::dbTech* );
+
+#ifdef OPENDB
+void dbLefLayers(odb::dbTech* );
 void dbLefVias(odb::dbTech* );
 void dbLefMacros(odb::dbLib* );
 
 void dbLefViaRules(odb::dbTech* );
-void dbLefViaGenerateRules(odb::dbTech* );*/
-
+void dbLefViaGenerateRules(odb::dbTech* );
+#endif
 #endif
 

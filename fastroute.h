@@ -617,7 +617,7 @@ void runFastRoute(parser::grGenerator grGen, string OutFileName, parser::Congest
 
     Bool input, WriteOut;
     input=WriteOut=0;
-    numThreads = 1; // Just for test of lef/def and openDB
+    //numThreads = 1; // Just for test of lef/def and openDB
     cout << " nthreads: " << numThreads << endl;
     if(OutFileName != "")
     {
@@ -1025,11 +1025,11 @@ void runFastRoute(parser::grGenerator grGen, string OutFileName, parser::Congest
                         else {
                             numThreads = numThreads / 2;
 							galois::setActiveThreads(numThreads);
-                        }
-					}
+					    }
+                    }
 				}
 			}
-            cout << "nthreads :" << numThreads << endl;
+			cout << "nthreads :" <<	numThreads << endl;
 			extrarun = false;
 
 
