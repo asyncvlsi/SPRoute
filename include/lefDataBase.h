@@ -2,9 +2,9 @@
 #define LEFDATABASE_H
 
 #include "header.h"
-#include "parserDataType.h"
+#include "sprouteDataType.h"
 
-namespace parser
+namespace sproute
 {
 
 class ViaRuleGenerateLayer
@@ -432,11 +432,8 @@ public:
     string busBitChars;
     string dividerChar;
 
-    string useMinSpacing;
-
     int dbuPerMicron;
 
-    string clearanceMeasure;
     double manufacturingGrid;
 
     std::map<string, int> layer2idx;
@@ -493,13 +490,5 @@ int getLefVias(lefrCallbackType_e , lefiVia* , lefiUserData );
 int getLefViaGenerateRules(lefrCallbackType_e , lefiViaRule* , lefiUserData );
 
 
-#ifdef OPENDB
-void dbLefLayers(odb::dbTech* );
-void dbLefVias(odb::dbTech* );
-void dbLefMacros(odb::dbLib* );
-
-void dbLefViaRules(odb::dbTech* );
-void dbLefViaGenerateRules(odb::dbTech* );
-#endif
 #endif
 

@@ -12,7 +12,7 @@
 
 #include "galois/graphs/Graph.h"
 
-using namespace parser;
+using namespace sproute;
 
 #define FLOW_ALPHA 6
 #define FLOW_BETA 12
@@ -56,103 +56,6 @@ public:
 
 };
 
-Range<int> getTrackRange(int layerIdx, Rect2D<float> rect, bool expand)
-{
-    int lower, upper, startTrackIdx, endTrackIdx;
-    int trackStart, trackStep;
-    string direction = lefDB.layers.at(layerIdx).direction;
-    string layerName = lefDB.layers.at(layerIdx).name;
-
-    if(defDB.layerName2trackidx.count(layerName) == 0)
-    {
-        cout << "unable to find layer in layer tracks: " << layerName << endl;
-        exit(1);
-    }
-
-    if(direction == "HORIZONTAL") // for pessimism, disable one more track 
-    {
-        lower = rect.lowerLeft.y;
-        upper = rect.upperRight.y;  
-    }
-    else if(direction == "VERTICAL")
-    {
-        lower = rect.lowerLeft.x;
-        upper = rect.upperRight.x;
-    }
-    else
-    {
-        cout << "unkown direction of layer : " << layerIdx << endl;
-        exit(1);
-    }
-
-    int trackIdx = defDB.layerName2trackidx.find(layerName)->second;
-    trackStart = defDB.tracks.at(trackIdx).start;
-    trackStep = defDB.tracks.at(trackIdx).step;
-
-    if(expand)
-    {
-	    startTrackIdx = (lower - trackStep - trackStart) / trackStep;
-	    startTrackIdx = (startTrackIdx < 0)? 0 : startTrackIdx;
-	    endTrackIdx = (upper + trackStep - trackStart) / trackStep;
-	}
-	else
-	{
-		startTrackIdx = (lower - trackStart) / trackStep + 1;
-	    endTrackIdx = (upper - trackStart) / trackStep;
-	}
-
-    return Range<int>(startTrackIdx, endTrackIdx);
-}
-
-Range<int> getTrackRange(int layerIdx, Rect2D<int> rect, bool expand)
-{
-    int lower, upper, startTrackIdx, endTrackIdx;
-    int trackStart, trackStep;
-    string direction = lefDB.layers.at(layerIdx).direction;
-    string layerName = lefDB.layers.at(layerIdx).name;
-
-    if(defDB.layerName2trackidx.count(layerName) == 0)
-    {
-        cout << "unable to find layer in layer tracks: " << layerName << endl;
-        exit(1);
-    }
-
-    if(direction == "HORIZONTAL") // for pessimism, disable one more track 
-    {
-        lower = rect.lowerLeft.y;
-        upper = rect.upperRight.y;
-    }
-    else if(direction == "VERTICAL")
-    {
-        lower = rect.lowerLeft.x;
-        upper = rect.upperRight.x;
-    }
-    else
-    {
-        cout << "unkown direction of layer : " << layerIdx << endl;
-        exit(1);
-    }
-
-    int trackIdx = defDB.layerName2trackidx.find(layerName)->second;
-    trackStart = defDB.tracks.at(trackIdx).start;
-    trackStep = defDB.tracks.at(trackIdx).step;
-
-    if(expand)
-    {
-	    startTrackIdx = (lower - trackStep - trackStart) / trackStep;
-	    startTrackIdx = (startTrackIdx < 0)? 0 : startTrackIdx;
-	    endTrackIdx = (upper + trackStep - trackStart) / trackStep;
-	}
-	else
-	{
-		startTrackIdx = (lower - trackStart) / trackStep + 1;
-	    endTrackIdx = (upper - trackStart) / trackStep;
-	}
-
-    return Range<int>(startTrackIdx, endTrackIdx);
-}
-
-
 
 #if MAX_FLOW
 
@@ -190,14 +93,14 @@ void constructGraph(FlowGraph& graph, GraphTemplate& graphTemplate, int layer, R
 {
 	int expand = 0;
 	string layerName = lefDB.layers.at(layer * 2).name;
-	int trackIdx = defDB.layerName2trackidx.find(layerName)->second;
+	int trackIdx = sproute.layerid_2_trackid_.find(layerIdx)->second;
 	int trackStep = defDB.tracks.at(trackIdx).step;
 	expand = std::max(expand, trackStep);
 
 	if(layer < defDB.gcellGridDim.z - 1)
 	{
 		string topLayerName = lefDB.layers.at((layer + 1) * 2).name;
-		int topTrackIdx = defDB.layerName2trackidx.find(topLayerName)->second;
+		int topTrackIdx = sproute.layerid_2_trackid_.find((layer + 1) * 2)->second;
 		int topTrackStep = defDB.tracks.at(topTrackIdx).step;
 		expand = std::max(expand, topTrackStep);
 	}
@@ -543,7 +446,7 @@ int genGraphTemplateGcell(int x, int y, int z, GraphTemplate& graphTemplate, boo
 
     Range<int> curLayerTrackRange = getTrackRange(z*2, GraphRegion, false);
     string curLayerName = lefDB.layers.at(2*z).name;
-    int curTrackIdx = defDB.layerName2trackidx.find(curLayerName)->second;
+    int curTrackIdx = sproute.layerid_2_trackid_.find(2*z)->second;
     Track curTrack = defDB.tracks.at(curTrackIdx);
     int curTrackStart = curTrack.start;
     int curTrackStep = curTrack.step;
@@ -558,7 +461,7 @@ int genGraphTemplateGcell(int x, int y, int z, GraphTemplate& graphTemplate, boo
         Range<int> botLayerTrackRange = getTrackRange((z - 1)*2, GraphRegion, false);
 
         string botLayerName = lefDB.layers.at(2*(z - 1)).name;
-        int botTrackIdx = defDB.layerName2trackidx.find(botLayerName)->second;
+        int botTrackIdx = sproute.layerid_2_trackid_.find(2*(z - 1))->second;
         Track botTrack = defDB.tracks.at(botTrackIdx);
         int botTrackStart = botTrack.start;
         int botTrackStep = botTrack.step;
@@ -576,7 +479,7 @@ int genGraphTemplateGcell(int x, int y, int z, GraphTemplate& graphTemplate, boo
         Range<int> topLayerTrackRange = getTrackRange((z + 1)*2, GraphRegion, false);
 
         string topLayerName = lefDB.layers.at(2*(z + 1)).name;
-        int topTrackIdx = defDB.layerName2trackidx.find(topLayerName)->second;
+        int topTrackIdx = sproute.layerid_2_trackid_.find(2*(z + 1))->second;
         Track topTrack = defDB.tracks.at(topTrackIdx);
         int topTrackStart = topTrack.start;
         int topTrackStep = topTrack.step;

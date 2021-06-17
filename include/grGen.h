@@ -2,10 +2,10 @@
 #define GRGEN_H
 
 #include "header.h"
-#include "parserDataType.h"
+#include "sprouteDataType.h"
 #include "defDataBase.h"
 
-namespace parser
+namespace sproute
 {
 
 int find_Gcell(int pin_in, std::vector<int> GcellBoundaries)
@@ -84,8 +84,6 @@ public:
 
 };
 
-
-
 class grGenerator
 {
 public:
@@ -106,6 +104,8 @@ public:
 
 	int numAdjust;
 	galois::InsertBag<CapReduction>* capReductions_p;
+
+	grGenerator() {}
 
 	grGenerator(lefDataBase& lefDB, defDataBase& defDB, galois::InsertBag<CapReduction>& capReductions)
 	{
@@ -284,7 +284,7 @@ public:
                                 if(lefDB.layers[layerIdx].type != "ROUTING")
                                     continue;
                                 int pinRegionz = layerIdx / 2 + 1;
-                                int trackIdx = defDB.layerName2trackidx.find(layerRects.layerName)->second;
+                                int trackIdx = defDB.layeridx2trackidx[layerIdx];
 								int trackStep = defDB.tracks.at(trackIdx).step;
 								for(auto rect: layerRects.rects)
 								{

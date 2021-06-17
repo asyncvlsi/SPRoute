@@ -1,10 +1,10 @@
 #include "lefDataBase.h"
 #include "defDataBase.h"
 
-extern parser::lefDataBase lefDB;
-extern parser::defDataBase defDB;
+extern sproute::lefDataBase lefDB;
+extern sproute::defDataBase defDB;
 
-namespace parser
+namespace sproute
 {
 
 lefKeyword token2lefKeyword(string token)
@@ -645,7 +645,7 @@ void lefDataBase::parselefVia(stringstream& infile)
     vias.push_back(tmpVia);
 }
 
-}//namespace parser
+}//namespace sproute
 
 int getLefMacros(lefrCallbackType_e type, lefiMacro* macro, lefiUserData data) {
     //bool enableOutput = true;
@@ -666,8 +666,8 @@ int getLefMacros(lefrCallbackType_e type, lefiMacro* macro, lefiUserData data) {
                            <<sizeY    <<endl;
     }
 
-    ((parser::lefDataBase*)data)->tmpMacro.setOrigin(originX, originY);
-    ((parser::lefDataBase*)data)->tmpMacro.setSize(sizeX, sizeY);
+    ((sproute::lefDataBase*)data)->tmpMacro.setOrigin(originX, originY);
+    ((sproute::lefDataBase*)data)->tmpMacro.setSize(sizeX, sizeY);
 
     return 0;
 }
@@ -676,21 +676,21 @@ int getLefString(lefrCallbackType_e type, const char* str, lefiUserData data) {
   //bool enableOutput = true;
   bool enableOutput = false;
   if (type == lefrMacroBeginCbkType) {
-    auto &tmpMacro = ((parser::lefDataBase*) data)->tmpMacro;
+    auto &tmpMacro = ((sproute::lefDataBase*) data)->tmpMacro;
     tmpMacro.reset();
     tmpMacro.name = string(str);
     if (enableOutput) {
       cout <<"MACRO " <<tmpMacro.name <<endl;
     }
   } else if (type == lefrMacroEndCbkType) {
-    auto &tmpMacro = ((parser::lefDataBase*)data)->tmpMacro;
+    auto &tmpMacro = ((sproute::lefDataBase*)data)->tmpMacro;
     
     if (enableOutput) {
-      cout <<"END " <<tmpMacro.name <<" " << ((parser::lefDataBase*)data)->macros.size() <<endl;
+      cout <<"END " <<tmpMacro.name <<" " << ((sproute::lefDataBase*)data)->macros.size() <<endl;
     }
-    int macroIdx = ((parser::lefDataBase*)data)->macros.size();
-    ((parser::lefDataBase*)data)->macro2idx.insert( pair<string, int> (tmpMacro.name, macroIdx));
-    ((parser::lefDataBase*)data)->macros.push_back(tmpMacro);
+    int macroIdx = ((sproute::lefDataBase*)data)->macros.size();
+    ((sproute::lefDataBase*)data)->macro2idx.insert( pair<string, int> (tmpMacro.name, macroIdx));
+    ((sproute::lefDataBase*)data)->macros.push_back(tmpMacro);
 
   } else {
     cout <<"Type is not supported!" <<endl;
@@ -703,9 +703,9 @@ int getLefString(lefrCallbackType_e type, const char* str, lefiUserData data) {
 int getLefUnits(lefrCallbackType_e type, lefiUnits* units, lefiUserData data) {
   //bool enableOutput = true;
   bool enableOutput = true;
-  ((parser::lefDataBase*) data)->dbuPerMicron = units->databaseNumber();
+  ((sproute::lefDataBase*) data)->dbuPerMicron = units->databaseNumber();
   if (enableOutput) {
-    cout <<"DATABASE MICRONS " << ((parser::lefDataBase*) data)->dbuPerMicron <<endl;
+    cout <<"DATABASE MICRONS " << ((sproute::lefDataBase*) data)->dbuPerMicron <<endl;
   }
   return 0;
 }
@@ -714,14 +714,14 @@ int getLefUnits(lefrCallbackType_e type, lefiUnits* units, lefiUserData data) {
 int getLefManufacturingGrid(lefrCallbackType_e type, double number, lefiUserData data) {
   //bool enableOutput = true;
   bool enableOutput = false;
-  ((parser::lefDataBase*) data)->manufacturingGrid = number;
+  ((sproute::lefDataBase*) data)->manufacturingGrid = number;
   if (enableOutput) {
     cout <<"MANUFACTURINGGRID " <<number <<endl;
   }
   return 0;
 }
 
-void checkLargePin(parser::Pin pin)
+void checkLargePin(sproute::Pin pin)
 {
     float minx = 1000000, miny = 10000000;
     float maxx = -1000000, maxy = -10000000;
@@ -755,11 +755,11 @@ int getLefPins(lefrCallbackType_e type, lefiPin* pin, lefiUserData data) {
     }
 
     // term
-    auto& tmpMacro = ((parser::lefDataBase*) data)->tmpMacro;
+    auto& tmpMacro = ((sproute::lefDataBase*) data)->tmpMacro;
 
-    parser::Pin tmpPin;
-    parser::LayerRect tmpLayerRect;
-    parser::Rect2D<float> tmpRect;
+    sproute::Pin tmpPin;
+    sproute::LayerRect tmpLayerRect;
+    sproute::Rect2D<float> tmpRect;
 
     tmpPin.name = pin->name();
     tmpPin.use = pin->use();
@@ -848,10 +848,10 @@ int getLefObs(lefrCallbackType_e type, lefiObstruction* obs, lefiUserData data) 
         exit(1);
     }
 
-    auto& tmpMacro = ((parser::lefDataBase*) data)->tmpMacro;
+    auto& tmpMacro = ((sproute::lefDataBase*) data)->tmpMacro;
 
-    parser::LayerRect tmpLayerRect;
-    parser::Rect2D<float> tmpRect;
+    sproute::LayerRect tmpLayerRect;
+    sproute::Rect2D<float> tmpRect;
 
     if (enableOutput) {
         cout <<"  OBS" <<endl;
@@ -912,7 +912,7 @@ int getLefCornerSpacing(void* data, const string& stringProp)
 {
     istringstream istr(stringProp);
     string token;
-    auto& tmpLayer = ((parser::lefDataBase*) data)->tmpLayer;
+    auto& tmpLayer = ((sproute::lefDataBase*) data)->tmpLayer;
     while(!istr.eof())
     {
         istr >> token;
@@ -945,7 +945,7 @@ int getLefLayers(lefrCallbackType_e type, lefiLayer* layer, lefiUserData data) {
     exit(1);
   }
 
-  auto& tmpLayer = ((parser::lefDataBase*) data)->tmpLayer;
+  auto& tmpLayer = ((sproute::lefDataBase*) data)->tmpLayer;
   tmpLayer.reset();
 
   if (strcmp(layer->type(), "ROUTING") == 0) 
@@ -994,7 +994,7 @@ int getLefLayers(lefrCallbackType_e type, lefiLayer* layer, lefiUserData data) {
 
     // read spacing rule
     for (int i = 0; i < layer->numSpacing(); ++i) {
-        parser::Spacing tmpSpacing;
+        sproute::Spacing tmpSpacing;
         tmpSpacing.spacing = layer->spacing(i);
 
         if (layer->hasSpacingEndOfLine(i)) {
@@ -1055,10 +1055,10 @@ int getLefLayers(lefrCallbackType_e type, lefiLayer* layer, lefiUserData data) {
         }
     }
 
-    int layerIdx = ((parser::lefDataBase*)data)->layers.size();
+    int layerIdx = ((sproute::lefDataBase*)data)->layers.size();
     tmpLayer.idx = layerIdx;
-    ((parser::lefDataBase*)data)->layer2idx.insert( pair<string, int> (tmpLayer.name, layerIdx));
-    ((parser::lefDataBase*)data)->layers.push_back(tmpLayer);
+    ((sproute::lefDataBase*)data)->layer2idx.insert( pair<string, int> (tmpLayer.name, layerIdx));
+    ((sproute::lefDataBase*)data)->layers.push_back(tmpLayer);
 
   } 
   else if (strcmp(layer->type(), "CUT") == 0) // cut layer
@@ -1073,7 +1073,7 @@ int getLefLayers(lefrCallbackType_e type, lefiLayer* layer, lefiUserData data) {
 
         if(layer->hasSpacingAdjacent(i))
         {
-            parser::Spacing tmpSpacing;
+            sproute::Spacing tmpSpacing;
             tmpSpacing.spacing = layer->spacing(i);
             tmpSpacing.adjacentCuts = layer->spacingAdjacentCuts(i);
             tmpSpacing.cutWithin = layer->spacingAdjacentWithin(i);
@@ -1085,10 +1085,10 @@ int getLefLayers(lefrCallbackType_e type, lefiLayer* layer, lefiUserData data) {
         }
     }
     
-    int layerIdx = ((parser::lefDataBase*) data)->layers.size();
+    int layerIdx = ((sproute::lefDataBase*) data)->layers.size();
     tmpLayer.idx = layerIdx;
-    ((parser::lefDataBase*) data)->layer2idx.insert( pair<string, int> (tmpLayer.name, layerIdx));
-    ((parser::lefDataBase*) data)->layers.push_back(tmpLayer);
+    ((sproute::lefDataBase*) data)->layer2idx.insert( pair<string, int> (tmpLayer.name, layerIdx));
+    ((sproute::lefDataBase*) data)->layers.push_back(tmpLayer);
 
   } 
   else 
@@ -1113,7 +1113,7 @@ int getLefVias(lefrCallbackType_e type, lefiVia* via, lefiUserData data) {
     cout <<"Type is not lefrViaCbkType!" <<endl;
     // exit(1);
   }
-  parser::lefVia tmpVia;
+  sproute::lefVia tmpVia;
 
   tmpVia.name = via->name();
 
@@ -1130,20 +1130,20 @@ int getLefVias(lefrCallbackType_e type, lefiVia* via, lefiUserData data) {
   }
 
   for (int i = 0; i < via->numLayers(); ++i) {
-    parser::LayerRect tmpLayerRect;
+    sproute::LayerRect tmpLayerRect;
     tmpLayerRect.layerName = via->layerName(i);
     for (int j = 0; j < via->numRects(i); ++j)
     {
-        parser::Rect2D<float> rect;
+        sproute::Rect2D<float> rect;
         rect.set(via->xl(i, j), via->yl(i, j), via->xh(i, j), via->yh(i, j));
         tmpLayerRect.rects.push_back(rect);
     }
     tmpVia.layerRects.push_back(tmpLayerRect);
   }
   
-  int viaIdx = ((parser::lefDataBase*) data)->vias.size();
-  ((parser::lefDataBase*) data)->lefVia2idx.insert( pair<string, int> (tmpVia.name, viaIdx));
-  ((parser::lefDataBase*) data)->vias.push_back(tmpVia);
+  int viaIdx = ((sproute::lefDataBase*) data)->vias.size();
+  ((sproute::lefDataBase*) data)->lefVia2idx.insert( pair<string, int> (tmpVia.name, viaIdx));
+  ((sproute::lefDataBase*) data)->vias.push_back(tmpVia);
 
   if(enableOutput)
     tmpVia.print();  
@@ -1158,7 +1158,7 @@ int getLefViaGenerateRules(lefrCallbackType_e type, lefiViaRule* viaRule, lefiUs
     cout <<"Type is not lefrViaRuleCbkType!" <<endl;
     // exit(1);
   }
-  parser::ViaRuleGenerate tmpViaRule;
+  sproute::ViaRuleGenerate tmpViaRule;
 
   if (viaRule->numLayers() != 3) 
   {
@@ -1192,9 +1192,9 @@ int getLefViaGenerateRules(lefrCallbackType_e type, lefiViaRule* viaRule, lefiUs
     
   }
   
-  int viaRuleIdx = ((parser::lefDataBase*) data)->viaRuleGenerates.size();
-  ((parser::lefDataBase*) data)->viaRuleGenerate2idx.insert( pair<string, int> (tmpViaRule.name, viaRuleIdx));
-  ((parser::lefDataBase*) data)->viaRuleGenerates.push_back(tmpViaRule);
+  int viaRuleIdx = ((sproute::lefDataBase*) data)->viaRuleGenerates.size();
+  ((sproute::lefDataBase*) data)->viaRuleGenerate2idx.insert( pair<string, int> (tmpViaRule.name, viaRuleIdx));
+  ((sproute::lefDataBase*) data)->viaRuleGenerates.push_back(tmpViaRule);
 
   if(enableOutput)
     tmpViaRule.print();
@@ -1266,7 +1266,7 @@ void dbLefLayers(odb::dbTech* tech)
             cout << "little try: " << dbLayer->getSpacing(1600, 1000) << endl;
         }*/
 
-        parser::Layer tmpLayer;
+        sproute::Layer tmpLayer;
         tmpLayer.name = layerName;
         tmpLayer.type = type;
         tmpLayer.direction = direction;
@@ -1287,7 +1287,7 @@ void dbLefMacros(odb::dbLib* lib)
 
     for(auto dbMacro : lib->getMasters())
     {
-        parser::Macro tmpMacro;
+        sproute::Macro tmpMacro;
         tmpMacro.name = dbMacro->getConstName();
         int tmpX, tmpY;
         dbMacro->getOrigin(tmpX, tmpY);
@@ -1299,7 +1299,7 @@ void dbLefMacros(odb::dbLib* lib)
         //cout << dbMacro->getOrigin(x, y) << dbMacro.getWidth() << dbMacro.getHeight() << endl;
         for(auto dbMTerm : dbMacro->getMTerms())
         {
-            parser::Pin tmpPin;
+            sproute::Pin tmpPin;
             tmpPin.name = dbMTerm->getConstName();
 
             //cout << " " << dbMTerm->getConstName() << endl;
@@ -1307,14 +1307,14 @@ void dbLefMacros(odb::dbLib* lib)
             {
                 for(auto dbBox : dbMPin->getGeometry())
                 {
-                    parser::Rect2D<float> rect;
+                    sproute::Rect2D<float> rect;
                     rect.lowerLeft.x = dbBox->xMin();
                     rect.lowerLeft.y = dbBox->yMin();
                     //rect.lowerLeft.z = lefDB.layer2idx.find(dbBox->getTechLayer()->getConstName())->second;
                     rect.upperRight.x = dbBox->xMax();
                     rect.upperRight.y = dbBox->yMax();
                     //rect.upperRight.z = lefDB.layer2idx.find(dbBox->getTechLayer()->getConstName())->second;
-                    parser::LayerRect tmpLayerRect;
+                    sproute::LayerRect tmpLayerRect;
                     tmpLayerRect.layerName = dbBox->getTechLayer()->getConstName();
                     tmpLayerRect.rects.push_back(rect);
                     tmpPin.layerRects.push_back(tmpLayerRect);
@@ -1331,14 +1331,14 @@ void dbLefMacros(odb::dbLib* lib)
 
         for(auto dbOBS : dbMacro->getObstructions())
         {
-            parser::Rect2D<float> rect;
+            sproute::Rect2D<float> rect;
             rect.lowerLeft.x = dbOBS->xMin();
             rect.lowerLeft.y = dbOBS->yMin();
             //rect.lowerLeft.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
             rect.upperRight.x = dbOBS->xMax();
             rect.upperRight.y = dbOBS->yMax();
             //rect.upperRight.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
-            parser::LayerRect tmpLayerRect;
+            sproute::LayerRect tmpLayerRect;
             tmpLayerRect.layerName = dbOBS->getTechLayer()->getConstName();
             tmpLayerRect.rects.push_back(rect);
             tmpMacro.obs.layerRects.push_back(tmpLayerRect);
@@ -1360,18 +1360,18 @@ void dbLefVias(odb::dbTech* tech)
 
     for(auto dbTechVia : tech->getVias())
     {
-        parser::lefVia tmpVia;
+        sproute::lefVia tmpVia;
         tmpVia.name = dbTechVia->getConstName();
         for(auto dbBox : dbTechVia->getBoxes())
         {
-            parser::Rect2D<float> rect;
+            sproute::Rect2D<float> rect;
             rect.lowerLeft.x = dbBox->xMin();
             rect.lowerLeft.y = dbBox->yMin();
             //rect.lowerLeft.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
             rect.upperRight.x = dbBox->xMax();
             rect.upperRight.y = dbBox->yMax();
             //rect.upperRight.z = lefDB.layer2idx.find(dbOBS->getTechLayer()->getConstName());
-            parser::LayerRect tmpLayerRect;
+            sproute::LayerRect tmpLayerRect;
             tmpLayerRect.layerName = dbBox->getTechLayer()->getConstName();
             tmpLayerRect.rects.push_back(rect);
             

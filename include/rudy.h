@@ -244,10 +244,10 @@ void plot_drc_map() {
             y1 *= dbuPerMicro;
             y2 *= dbuPerMicro;
 
-            int x_start = parser::find_Gcell((int) x1, defDB.xGcellBoundaries); //all are inclusive
-            int x_end   = parser::find_Gcell((int) x2, defDB.xGcellBoundaries);
-            int y_start = parser::find_Gcell((int) y1, defDB.yGcellBoundaries);
-            int y_end   = parser::find_Gcell((int) y2, defDB.yGcellBoundaries);
+            int x_start = sproute::find_Gcell((int) x1, defDB.xGcellBoundaries); //all are inclusive
+            int x_end   = sproute::find_Gcell((int) x2, defDB.xGcellBoundaries);
+            int y_start = sproute::find_Gcell((int) y1, defDB.yGcellBoundaries);
+            int y_end   = sproute::find_Gcell((int) y2, defDB.yGcellBoundaries);
 
             int x_mid = (x_start + x_end) / 2;
             int y_mid = (y_start + y_end) / 2;

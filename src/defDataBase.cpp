@@ -1,9 +1,9 @@
 #include "defDataBase.h"
 
-extern parser::lefDataBase lefDB;
-extern parser::defDataBase defDB;
+extern sproute::lefDataBase lefDB;
+extern sproute::defDataBase defDB;
 
-namespace parser
+namespace sproute
 {
 
 defKeyword token2defKeyword(string token)
@@ -56,7 +56,7 @@ void semicolonCheck(stringstream& infile)
     }
 }
 
-void defDataBase::parseRow(stringstream& infile)
+void defDataBase::sprouteow(stringstream& infile)
 {
     Row tmpRow;
     string strDO, strBY, strSTEP;
@@ -125,7 +125,7 @@ void defDataBase::parseGcellGrid(stringstream& infile)
 
 }
 
-Rect2DLayer<int> defDataBase::parseRect2DLayer(stringstream& infile)
+Rect2DLayer<int> defDataBase::sprouteect2DLayer(stringstream& infile)
 {
     Rect2DLayer<int> tmpRect2DLayer;
     string strLEFT, strRIGHT;
@@ -195,7 +195,7 @@ void defDataBase::parsedefVias(stringstream& infile)
             }
             else if(token == "RECT")
             {
-                tmpVia.rect2DLayers.push_back(parseRect2DLayer(infile));
+                tmpVia.rect2DLayers.push_back(sprouteect2DLayer(infile));
             }
             else if(token == "PATTERN")
             {
@@ -432,14 +432,14 @@ Gcell& defDataBase::getGcell(int x, int y, int z)
     return gcells.at(loc);
 }
 
-}//namespace parser
+}//namespace sproute
 
 
 int getDefString(defrCallbackType_e type, const char* str, defiUserData data) {
   //bool enableOutput = true;
   bool enableOutput = true;
   if ((type == defrDesignStartCbkType)) {
-    ((parser::defDataBase*) data)->designName = string(str);
+    ((sproute::defDataBase*) data)->designName = string(str);
 
     if (enableOutput) {
       cout <<"DESIGN " << string(str) <<" ;" <<endl;
@@ -467,11 +467,11 @@ int getDefDieArea(defrCallbackType_e type, defiBox* box, defiUserData data) {
     cout <<"Type is not defrDieAreaCbkType!" <<endl;
     exit(1);
   }
-  ((parser::defDataBase*) data)->dieArea.set(box->xl(), box->yl(), box->xh(), box->yh());
+  ((sproute::defDataBase*) data)->dieArea.set(box->xl(), box->yl(), box->xh(), box->yh());
 
   if (enableOutput) {
     cout << " DIE AREA : " << endl;
-    ((parser::defDataBase*) data)->dieArea.print();
+    ((sproute::defDataBase*) data)->dieArea.print();
   }
     
   return 0;
@@ -480,9 +480,9 @@ int getDefDieArea(defrCallbackType_e type, defiBox* box, defiUserData data) {
 int getDefUnits(defrCallbackType_e type, double number, defiUserData data) {
   //bool enableOutput = true;
   bool enableOutput = true;
-  ((parser::defDataBase*) data)->dbuPerMicro = number;
+  ((sproute::defDataBase*) data)->dbuPerMicro = number;
   if (enableOutput) {
-    cout <<"UNITS DISTANCE MICRONS " <<((parser::defDataBase*) data)->dbuPerMicro <<" ;" <<endl;
+    cout <<"UNITS DISTANCE MICRONS " <<((sproute::defDataBase*) data)->dbuPerMicro <<" ;" <<endl;
   }
   return 0;
 }
@@ -496,7 +496,7 @@ int getDefTracks(defrCallbackType_e type, defiTrack* track, defiUserData data) {
     exit(1);
   }
 
-  parser::Track tmpTrack;
+  sproute::Track tmpTrack;
 
   tmpTrack.direction = track->macro();
   tmpTrack.start = track->x();
@@ -509,7 +509,7 @@ int getDefTracks(defrCallbackType_e type, defiTrack* track, defiUserData data) {
     tmpTrack.layerNames.push_back(layerName);
   }
 
-  ((parser::defDataBase*) data)->tracks.push_back(tmpTrack);
+  ((sproute::defDataBase*) data)->tracks.push_back(tmpTrack);
   
 
   if(enableOutput)
@@ -527,7 +527,7 @@ int getDefComponents(defrCallbackType_e type, defiComponent* comp, defiUserData 
     exit(1);
   }
 
-  parser::Component tmpComp;
+  sproute::Component tmpComp;
   tmpComp.name = comp->id();
   tmpComp.macroName = comp->name();
   tmpComp.locationType = (comp->isFixed())? "FIXED" : "PLACED";
@@ -535,9 +535,9 @@ int getDefComponents(defrCallbackType_e type, defiComponent* comp, defiUserData 
   tmpComp.location.y = comp->placementY();
   tmpComp.orient = string(comp->placementOrientStr());
 
-  tmpComp.idx = ((parser::defDataBase*) data)->components.size();
-  ((parser::defDataBase*) data)->component2idx.insert( pair<string, int> (tmpComp.name, tmpComp.idx));
-  ((parser::defDataBase*) data)->components.push_back(tmpComp);
+  tmpComp.idx = ((sproute::defDataBase*) data)->components.size();
+  ((sproute::defDataBase*) data)->component2idx.insert( pair<string, int> (tmpComp.name, tmpComp.idx));
+  ((sproute::defDataBase*) data)->components.push_back(tmpComp);
 
   if(enableOutput)
     tmpComp.print();
@@ -554,7 +554,7 @@ int getDefIOPins(defrCallbackType_e type, defiPin* pin, defiUserData data) {
     exit(1);
   }
 
-  parser::IOPin tmpPin;
+  sproute::IOPin tmpPin;
   tmpPin.name = pin->pinName();
   tmpPin.netName = pin->netName();
   int llx, lly, urx, ury;
@@ -584,9 +584,9 @@ int getDefIOPins(defrCallbackType_e type, defiPin* pin, defiUserData data) {
 
   }
 
-  tmpPin.idx = ((parser::defDataBase*) data)->iopins.size();
-  ((parser::defDataBase*) data)->iopin2idx.insert( pair<string, int> (tmpPin.name, tmpPin.idx));
-  ((parser::defDataBase*) data)->iopins.push_back(tmpPin);
+  tmpPin.idx = ((sproute::defDataBase*) data)->iopins.size();
+  ((sproute::defDataBase*) data)->iopin2idx.insert( pair<string, int> (tmpPin.name, tmpPin.idx));
+  ((sproute::defDataBase*) data)->iopins.push_back(tmpPin);
 
   if(enableOutput)
     tmpPin.print();
@@ -604,7 +604,7 @@ int getDefNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
     cout <<"Type is not defrNetCbkType!" <<endl;
     exit(1);
   }
-  parser::Net tmpNet;
+  sproute::Net tmpNet;
   tmpNet.name = net->name();
 
   if (enableOutput) {
@@ -615,9 +615,9 @@ int getDefNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
     tmpNet.pinNames.push_back(string(net->pin(i)));
   }
 
-  int netID = ((parser::defDataBase*) data)->nets.size();
-  ((parser::defDataBase*) data)->nets.push_back(tmpNet);
-  ((parser::defDataBase*) data)->netName2netidx.insert(pair<string, int>(tmpNet.name, netID));
+  int netID = ((sproute::defDataBase*) data)->nets.size();
+  ((sproute::defDataBase*) data)->nets.push_back(tmpNet);
+  ((sproute::defDataBase*) data)->netName2netidx.insert(pair<string, int>(tmpNet.name, netID));
 
 
   if(enableOutput)
@@ -634,7 +634,7 @@ int getDefSNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
     cout <<"Type is not defr(S)NetCbkType!" <<endl;
     exit(1);
   }
-  parser::SNet tmpSNet;
+  sproute::SNet tmpSNet;
   tmpSNet.name = net->name();
 
   
@@ -675,7 +675,7 @@ int getDefSNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
     }
     // each path is a def line
     for (int j = 0; j < (int)tmpWire->numPaths(); j++) {
-      parser::Path tmpPath;
+      sproute::Path tmpPath;
       defiPath* path     = tmpWire->path(j);
       path->initTraverse();
       // initialize
@@ -769,7 +769,7 @@ int getDefSNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
 
       // add via
       /*if (viaName != "") {
-        if (((io::Parser*)data)->tech->name2via.find(viaName) == ((io::Parser*)data)->tech->name2via.end()) {
+        if (((io::sproute*)data)->tech->name2via.find(viaName) == ((io::sproute*)data)->tech->name2via.end()) {
           if (VERBOSE > -1) {
             cout <<"Error: unsupported via: " <<viaName <<endl;
           }
@@ -780,7 +780,7 @@ int getDefSNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
           } else {
             p.set(beginX, beginY);
           }
-          auto viaDef = ((io::Parser*)data)->tech->name2via[viaName];
+          auto viaDef = ((io::sproute*)data)->tech->name2via[viaName];
           auto tmpP = make_unique<frVia>(viaDef);
           tmpP->setOrigin(p);
           tmpP->addToNet(netIn);
@@ -791,7 +791,7 @@ int getDefSNets(defrCallbackType_e type, defiNet* net, defiUserData data) {
     } // end path
   } // end wire
  
-  ((parser::defDataBase*) data)->snets.push_back(tmpSNet);
+  ((sproute::defDataBase*) data)->snets.push_back(tmpSNet);
 
   if(enableOutput)
     tmpSNet.print();
@@ -808,7 +808,7 @@ int getDefVias(defrCallbackType_e type, defiVia* via, defiUserData data) {
     exit(1);
   }
 
-  parser::defVia tmpVia;
+  sproute::defVia tmpVia;
   tmpVia.name = via->name();
 
   // viaRule defined via
@@ -873,14 +873,14 @@ int getDefVias(defrCallbackType_e type, defiVia* via, defiUserData data) {
 
     for (int i = 0; i < via->numLayers(); ++i) {
       via->layer(i, &layerName, &xl, &yl, &xh, &yh);
-      parser::Rect2DLayer<int> tmpRect2DLayer;
+      sproute::Rect2DLayer<int> tmpRect2DLayer;
       tmpRect2DLayer.set(layerName, xl, yl, xh, yh);
     }
   }
 
-  tmpVia.idx = ((parser::defDataBase*) data)->vias.size();
-  ((parser::defDataBase*) data)->defVia2idx.insert( pair<string, int> (tmpVia.name, tmpVia.idx));
-  ((parser::defDataBase*) data)->vias.push_back(tmpVia);
+  tmpVia.idx = ((sproute::defDataBase*) data)->vias.size();
+  ((sproute::defDataBase*) data)->defVia2idx.insert( pair<string, int> (tmpVia.name, tmpVia.idx));
+  ((sproute::defDataBase*) data)->vias.push_back(tmpVia);
 
   if(enableOutput)
     tmpVia.print();
@@ -893,13 +893,13 @@ int getDefGcell(defrCallbackType_e type, defiGcellGrid* gcellGrid, defiUserData 
 {
     bool enableOutput = false;
 
-    parser::GcellGrid tmpGcellGrid;
+    sproute::GcellGrid tmpGcellGrid;
     tmpGcellGrid.direction = string(gcellGrid->macro());
     tmpGcellGrid.start = gcellGrid->x();
     tmpGcellGrid.numBoundaries = gcellGrid->xNum();
     tmpGcellGrid.step = gcellGrid->xStep();
 
-    ((parser::defDataBase*) data)->gcellGrids.push_back(tmpGcellGrid);
+    ((sproute::defDataBase*) data)->gcellGrids.push_back(tmpGcellGrid);
 
     if(enableOutput)
         tmpGcellGrid.print();
@@ -938,8 +938,8 @@ void dbDefTracks(dbBlock* chipBlock)
         assert(trackGrid->getNumGridPatternsX()); 
         assert(trackGrid->getNumGridPatternsY());
         cout << "numX: " <<  trackGrid->getNumGridPatternsX()  << "numY: " << trackGrid->getNumGridPatternsY() << endl;
-        parser::Track tmpTrackX;
-        parser::Track tmpTrackY;
+        sproute::Track tmpTrackX;
+        sproute::Track tmpTrackY;
         tmpTrackX.direction = "X";
         tmpTrackY.direction = "Y";
         trackGrid->getGridPatternX(0, tmpTrackX.start, tmpTrackX.numTracks, tmpTrackX.step); 
@@ -971,7 +971,7 @@ void dbDefGcellGrids(dbBlock* chipBlock)
     
     for(int i = 0; i < gcellGrid->getNumGridPatternsX(); i++)
     {
-        parser::GcellGrid tmpGcellGrid;
+        sproute::GcellGrid tmpGcellGrid;
         tmpGcellGrid.direction = "X";
         gcellGrid->getGridPatternX(i, tmpGcellGrid.start, tmpGcellGrid.numBoundaries, tmpGcellGrid.step); 
 
@@ -983,7 +983,7 @@ void dbDefGcellGrids(dbBlock* chipBlock)
     
     for(int i = 0; i < gcellGrid->getNumGridPatternsY(); i++)
     {
-        parser::GcellGrid tmpGcellGrid;
+        sproute::GcellGrid tmpGcellGrid;
         tmpGcellGrid.direction = "Y";
         gcellGrid->getGridPatternY(i, tmpGcellGrid.start, tmpGcellGrid.numBoundaries, tmpGcellGrid.step); 
 

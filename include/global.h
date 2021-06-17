@@ -3,16 +3,11 @@
 
 #include "defDataBase.h"
 #include "lefDataBase.h"
+#include "sproute.h"
 
-parser::defDataBase defDB;   
-parser::lefDataBase lefDB;
-
-int numThreads;
-int acc_count;
 
 #define GLOBAL_CAP_REDUCTION 4
 #define CAP_ADJ_FACTOR 1.0
-
 
 #define M2_ADJ_MIN 0.45
 #define M2_ADJ_MAX 0.9

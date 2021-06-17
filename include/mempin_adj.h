@@ -59,8 +59,8 @@ void memPinAdj(int xGrid, int yGrid) {
                 int l = layerIdx / 2;
 
                 if(first_rect.lowerLeft.x == xmin && lefDB.layers[layerIdx].direction == "HORIZONTAL" && xmin_cnt != 1) {
-                    int x = parser::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
-                    int y = parser::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
+                    int x = sproute::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
+                    int y = sproute::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
                     if(x > 0)
                         x -= 1;
      
@@ -78,8 +78,8 @@ void memPinAdj(int xGrid, int yGrid) {
                 }
 
                 if(first_rect.lowerLeft.x == xmax && lefDB.layers[layerIdx].direction == "HORIZONTAL" && xmax_cnt != 1) {
-                    int x = parser::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
-                    int y = parser::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
+                    int x = sproute::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
+                    int y = sproute::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
                     
                     int grid3D = y*(xGrid-1)+x+l*(xGrid-1)*yGrid;
                     if(h_edges3D[grid3D].cap < hCapacity3D[l]) {
@@ -97,8 +97,8 @@ void memPinAdj(int xGrid, int yGrid) {
 
 
                 if(first_rect.lowerLeft.y == ymin && lefDB.layers[layerIdx].direction == "VERTICAL" && ymin_cnt != 1) {
-                    int x = parser::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
-                    int y = parser::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
+                    int x = sproute::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
+                    int y = sproute::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
                     if(y > 0)
                         y -= 1;
                     
@@ -117,8 +117,8 @@ void memPinAdj(int xGrid, int yGrid) {
                 }
 
                 if(first_rect.lowerLeft.y == ymax && lefDB.layers[layerIdx].direction == "VERTICAL" && ymax_cnt != 1) {
-                    int x = parser::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
-                    int y = parser::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
+                    int x = sproute::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
+                    int y = sproute::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
                     
                     int grid3D = y*xGrid + x + l*xGrid*(yGrid-1);
                     if(v_edges3D[grid3D].cap < vCapacity3D[l]) {

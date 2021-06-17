@@ -5,6 +5,8 @@
 #include <stdlib.h>
 #include <limits.h>
 #include <math.h>
+
+namespace sproute {
 //#include "flute_mst.h"
 
 /*****************************/
@@ -1639,4 +1641,9 @@ void plottree(Tree t) {
     printf("%d %d\n\n", t.branch[t.branch[i].n].x, t.branch[t.branch[i].n].y);
   }
 }
+
+
+}
 #endif /* _FLUTE_H_ */
+
+

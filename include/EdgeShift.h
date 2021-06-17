@@ -9,8 +9,6 @@
 #include "route.h"
 #include "RipUp.h"
 
-#define HORIZONTAL 1
-#define VERTICAL 0
 
 int edgeShift(Tree* t) {
   int i, j, k, l, m, deg, root = 0, x, y, n, n1, n2, n3;
