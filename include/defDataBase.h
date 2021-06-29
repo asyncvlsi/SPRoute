@@ -4,7 +4,7 @@
 #include "header.h"
 #include "lefDataBase.h"
 
-namespace sproute
+namespace sproute_db
 {
 
 class defVia
@@ -402,17 +402,6 @@ public:
     std::vector<std::vector<Rect2D<float>>> origOBS;
     std::vector<std::vector<Rect2D<int>>> designRuleOBS;
     
-
-    void parsedefVias(stringstream& );
-    Rect2DLayer<int> parseRect2DLayer(stringstream& );
-    void parseRow(stringstream& );
-    void parseTracks(stringstream& );
-    void parseComponents(stringstream& );
-    void parseIOPins(stringstream& );
-    void parseSpecialNets(stringstream& );
-    void parseNets(stringstream& );
-    void parseGcellGrid(stringstream& );
-
     Gcell& getGcell(int x, int y, int z);
 
 };
@@ -438,8 +427,6 @@ enum defKeyword {
 defKeyword token2defKeyword(string );
 void semicolonCheck(stringstream& );
 
-}
-
 int getDefString(defrCallbackType_e , const char* , defiUserData );
 int getDefVoid(defrCallbackType_e , void* , defiUserData );
 int getDefDieArea(defrCallbackType_e , defiBox* , defiUserData );
@@ -452,12 +439,9 @@ int getDefSNets(defrCallbackType_e , defiNet* , defiUserData );
 int getDefVias(defrCallbackType_e , defiVia* , defiUserData );
 int getDefGcell(defrCallbackType_e , defiGcellGrid* , defiUserData );
 
-#ifdef OPENDB
-void dbDefDieArea(odb::dbBlock* );
-void dbDefUnits(odb::dbTech* );
-void dbDefTracks(odb::dbBlock* );
-void dbDefGcellGrids(odb::dbBlock* );
-void dbDefComponents(odb::dbBlock* );
-#endif
+int find_Gcell(int pin_in, std::vector<int> GcellBoundaries);
+
+
+} //namespace sproute_db
 
 #endif

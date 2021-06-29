@@ -4,7 +4,7 @@
 #include "header.h"
 #include "sprouteDataType.h"
 
-namespace sproute
+namespace sproute_db
 {
 
 class ViaRuleGenerateLayer
@@ -443,41 +443,8 @@ public:
 
     Macro tmpMacro;
     Layer tmpLayer;
-
-    void parseViaRule(stringstream& );
-    void parseUnits(stringstream& );
-    void parseLayer(stringstream& );
-    void parselefVia(stringstream& );
-    void parseMacro(stringstream& );
-    void parseSite(stringstream& );
-    void parsePROPERTYDEFINITIONS(stringstream& );
-    LayerRect parseLayerRect(stringstream& ,string& );
-    ViaRuleGenerateLayer parseViaRuleGenerateLayer(stringstream& ,string& );
-    SpacingTable parseSpacingTable(stringstream& );
-    Pin parsePin(stringstream& );
-    Obstacle parseOBS(stringstream& );
 };
 
-enum lefKeyword
-{
-    lefVERSION = 0,
-    lefDIVIDERCHAR,
-    lefBUSBITCHARS,
-    lefMANUFACTURINGGRID,
-    lefUNITS,
-    lefLAYER,
-    lefMACRO,
-    lefVIA,
-    lefSITE,
-    lefEND,
-    lefCLEARANCEMEASURE,
-    lefUSEMINSPACING,
-    lefPROPERTYDEFINITIONS,
-    lefVIARULE
-};
-
-lefKeyword token2lefKeyword(string );
-}
 
 int getLefMacros(lefrCallbackType_e , lefiMacro* , lefiUserData );
 int getLefString(lefrCallbackType_e , const char* , lefiUserData );
@@ -489,6 +456,7 @@ int getLefLayers(lefrCallbackType_e , lefiLayer* , lefiUserData );
 int getLefVias(lefrCallbackType_e , lefiVia* , lefiUserData );
 int getLefViaGenerateRules(lefrCallbackType_e , lefiViaRule* , lefiUserData );
 
+} //namespace sproute_db
 
 #endif
 

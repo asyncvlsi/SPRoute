@@ -142,7 +142,7 @@ target_link_libraries(sproute
 add_executable(lefdef-sproute
     test/main.cpp)
 target_link_libraries(lefdef-sproute
-    lef def galois_shmem sproute pthread numa)
+    lef def galois_shmem sproute pthread numa phydb)
 
 ######################################
 # specify the installation directory: ${ACT_HOME}

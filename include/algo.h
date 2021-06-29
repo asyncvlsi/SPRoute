@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 
+namespace sproute {
+
 enum Algo {
     FineGrain = 0,
     NonDet,
@@ -17,7 +19,7 @@ enum Algo {
     DetPart_Astar_Local
 };
 
-Algo StrToAlgo(string algo_str) {
+static Algo StrToAlgo(string algo_str) {
     if(algo_str == "FineGrain")
         return FineGrain;
     else if(algo_str == "NonDet") 
@@ -46,5 +48,7 @@ Algo StrToAlgo(string algo_str) {
     }
 
 }
+
+} //namespace sproute
 
 #endif

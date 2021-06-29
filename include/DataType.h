@@ -1,19 +1,21 @@
 #ifndef _DATATYPE_H_
 #define _DATATYPE_H_
 
+#include "galois/Galois.h"
+
+namespace sproute {
+
 #define MAXDEMAND 500  // MAX # Segments over an edge
 #define MAXLAYER 20    // MAX # Layer of a routing
 #define FILESTRLEN 100 // MAX length of file name
 #define BIG_INT 1e7    // big integer used as infinity
 
-//#define TRUE 1
-//#define FALSE 0
 typedef char Bool;
 
 typedef struct {
-  Bool xFirst; // route x-direction first (only for L route)
-  Bool HVH;    // TRUE = HVH or FALSE = VHV (only for Z route)
-  Bool maze;   // Whether this segment is routed by maze
+  bool xFirst; // route x-direction first (only for L route)
+  bool HVH;    // TRUE = HVH or FALSE = VHV (only for Z route)
+  bool maze;   // Whether this segment is routed by maze
 
   short x1, y1, x2, y2; // coordinates of two endpoints
   int netID;            // the netID of the net this segment belonging to
@@ -53,7 +55,7 @@ typedef struct {
 } Edge3D;
 
 typedef struct {
-  Bool assigned;
+  bool assigned;
 
   short status;
   short conCNT;
@@ -79,10 +81,10 @@ typedef char RouteType;
 
 typedef struct {
   RouteType type; // type of route: LROUTE, ZROUTE, MAZEROUTE
-  Bool
+  bool
       xFirst; // valid for LROUTE, TRUE - the route is horizontal first (x1, y1)
               // - (x2, y1) - (x2, y2), FALSE (x1, y1) - (x1, y2) - (x2, y2)
-  Bool
+  bool
       HVH; // valid for ZROUTE, TRUE - the route is HVH shape, FALSE - VHV shape
   short Zpoint; // valid for ZROUTE, the position of turn point for Z-shape
   short*
@@ -98,7 +100,7 @@ typedef struct {
 } Route;
 
 typedef struct {
-  Bool assigned;
+  bool assigned;
 
   int len; // the Manhanttan Distance for two end nodes
   int n1, n1a;
@@ -142,4 +144,8 @@ typedef struct {
 typedef enum { NORTH, EAST, SOUTH, WEST, ORIGIN, UP, DOWN } dirctionT;
 typedef enum { NONE, HORI, VERT, BID } viaST;
 
+} //namespace sproute
+
 #endif /* _DATATYPE_H_ */
+
+

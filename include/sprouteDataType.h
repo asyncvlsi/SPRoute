@@ -3,7 +3,7 @@
 
 #include "header.h"
 
-namespace sproute
+namespace sproute_db
 {
 
 template <typename T>
@@ -189,19 +189,21 @@ public:
     }
 };
 
-}
+
 
 template <typename T>
-std::ostream& operator<< (std::ostream& os, const sproute::Point2D<T> &p) {
+std::ostream& operator<< (std::ostream& os, const Point2D<T> &p) {
     std::cout << " ( " << p.x << ", " << p.y << ") ";
     return os;
 }
 
 template <typename T>
-std::ostream& operator<< (std::ostream& os, const sproute::Rect2D<T> &r) {
+std::ostream& operator<< (std::ostream& os, const Rect2D<T> &r) {
     std::cout << "Rect: ";
     std::cout << r.lowerLeft << r.upperRight;
     return os;
+}
+
 }
 
 

@@ -625,9 +625,9 @@ void mazeRouteMSMD_finegrain(int iter, int expand, float costHeight,
                   hyperV[curY][curX] = tmpV;
                 }
               },
-              galois::wl<galois::worklists::ParaMeter<>>(),
+              //galois::wl<galois::worklists::ParaMeter<>>(),
               // galois::wl<PSChunk>(),
-              // galois::wl<OBIM>(RequestIndexer),
+              galois::wl<OBIM>(RequestIndexer),
               // galois::chunk_size<MAZE_CHUNK_SIZE>()
               // galois::parallel_break(),
               // galois::steal(),

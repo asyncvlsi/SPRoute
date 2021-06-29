@@ -1,15 +1,7 @@
-#ifndef _RIPUP_H_
-#define _RIPUP_H_
+#include "ripup.h"
+#include "global_variable_extern.h"
 
-#include <stdio.h>
-#include <stdlib.h>
-#include "DataType.h"
-#include "flute.h"
-#include "DataProc.h"
-#include "route.h"
-#include "utility.h"
-
-// rip-up a L segment
+namespace sproute {
 void ripupSegL(Segment* seg) {
   int i, grid;
   int ymin, ymax;
@@ -179,14 +171,14 @@ void newRipup(TreeEdge* treeedge, int x1, int y1, int x2, int y2) {
   }
 }
 
-Bool newRipupType2(TreeEdge* treeedge, TreeNode* treenodes, int x1, int y1,
+bool newRipupType2(TreeEdge* treeedge, TreeNode* treenodes, int x1, int y1,
                    int x2, int y2, int deg) {
   int i, grid, ymin, ymax, n1, n2;
   RouteType ripuptype;
-  Bool needRipup = FALSE;
+  bool needRipup = false;
 
   if (treeedge->len == 0) {
-    return (FALSE); // not ripup for degraded edge
+    return (false); // not ripup for degraded edge
   }
 
   ripuptype = treeedge->route.type;
@@ -204,28 +196,28 @@ Bool newRipupType2(TreeEdge* treeedge, TreeNode* treenodes, int x1, int y1,
       grid = y1 * (xGrid - 1);
       for (i = x1; i < x2; i++) {
         if (h_edges[grid + i].est_usage > h_edges[grid + i].cap) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
 
       for (i = ymin; i < ymax; i++) {
         if (v_edges[i * xGrid + x2].est_usage > v_edges[i * xGrid + x2].cap) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
     } else {
       for (i = ymin; i < ymax; i++) {
         if (v_edges[i * xGrid + x1].est_usage > v_edges[i * xGrid + x1].cap) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
       grid = y2 * (xGrid - 1);
       for (i = x1; i < x2; i++) {
         if (h_edges[grid + i].est_usage > v_edges[grid + i].cap) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
@@ -276,14 +268,14 @@ void printEdgeVEC(TreeEdge* treeedge) {
   printf("\n");
 }
 
-Bool newRipupCheckProb(TreeEdge* treeedge, int ripup_threshold, int netID,
+bool newRipupCheckProb(TreeEdge* treeedge, int ripup_threshold, int netID,
                        int edgeID) {
   short *gridsX, *gridsY;
   int i, grid, ymin, xmin;
-  Bool needRipup = FALSE;
+  bool needRipup = false;
 
   if (treeedge->len == 0) {
-    return (FALSE);
+    return (false);
   } // not ripup for degraded edge
 
   // std::random_device rd;
@@ -305,7 +297,7 @@ Bool newRipupCheckProb(TreeEdge* treeedge, int ripup_threshold, int netID,
         // %d\n", v_edges[grid].red, r, cap, r%cap, overflow, (int)(r%cap <=
         // overflow));
         if (overflow >= 0 && (r % cap <= overflow)) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       } else if (gridsY[i] == gridsY[i + 1]) // a horizontal edge
@@ -320,7 +312,7 @@ Bool newRipupCheckProb(TreeEdge* treeedge, int ripup_threshold, int netID,
         // %d\n", h_edges[grid].red, r, cap, r%cap, overflow, (int)(r%cap <=
         // overflow));
         if (overflow >= 0 && (r % cap <= overflow)) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
@@ -344,9 +336,9 @@ Bool newRipupCheckProb(TreeEdge* treeedge, int ripup_threshold, int netID,
         }
       }
 
-      return (TRUE);
+      return (true);
     } else {
-      return (FALSE);
+      return (false);
     }
   } else {
     printf("route type is not maze, netID %d\n", netID);
@@ -357,14 +349,14 @@ Bool newRipupCheckProb(TreeEdge* treeedge, int ripup_threshold, int netID,
   }
 }
 
-Bool newRipupCheck(TreeEdge* treeedge, int ripup_threshold, int netID,
+bool newRipupCheck(TreeEdge* treeedge, int ripup_threshold, int netID,
                    int edgeID) {
   short *gridsX, *gridsY;
   int i, grid, ymin, xmin;
-  Bool needRipup = FALSE;
+  bool needRipup = false;
 
   if (treeedge->len == 0) {
-    return (FALSE);
+    return (false);
   } // not ripup for degraded edge
 
   if (treeedge->route.type == MAZEROUTE) {
@@ -377,7 +369,7 @@ Bool newRipupCheck(TreeEdge* treeedge, int ripup_threshold, int netID,
         grid = ymin * xGrid + gridsX[i];
         if (v_edges[grid].usage + v_edges[grid].red >=
             vCapacity - ripup_threshold) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
 
@@ -387,7 +379,7 @@ Bool newRipupCheck(TreeEdge* treeedge, int ripup_threshold, int netID,
         grid = gridsY[i] * (xGrid - 1) + xmin;
         if (h_edges[grid].usage + h_edges[grid].red >=
             hCapacity - ripup_threshold) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
@@ -410,9 +402,9 @@ Bool newRipupCheck(TreeEdge* treeedge, int ripup_threshold, int netID,
         }
       }
 
-      return (TRUE);
+      return (true);
     } else {
-      return (FALSE);
+      return (false);
     }
   } else {
     printf("route type is not maze, netID %d\n", netID);
@@ -423,15 +415,15 @@ Bool newRipupCheck(TreeEdge* treeedge, int ripup_threshold, int netID,
   }
 }
 
-Bool newRipupCheck_atomic(TreeEdge* treeedge, int ripup_threshold, int netID,
+bool newRipupCheck_atomic(TreeEdge* treeedge, int ripup_threshold, int netID,
                           int edgeID) {
   short *gridsX, *gridsY;
   int i, grid, ymin, xmin;
-  Bool needRipup = FALSE;
+  bool needRipup = false;
   int break_edge = 0;
 
   if (treeedge->len == 0) {
-    return (FALSE);
+    return (false);
   } // not ripup for degraded edge
   // std::cout << " atomic ripup" << std::endl;
   if (treeedge->route.type == MAZEROUTE) {
@@ -448,7 +440,7 @@ Bool newRipupCheck_atomic(TreeEdge* treeedge, int ripup_threshold, int netID,
           if (v_edges[grid].usage.compare_exchange_weak(old_usage,
                                                         old_usage - 1)) {
             break_edge = i;
-            needRipup  = TRUE;
+            needRipup  = true;
             break;
           }
           old_usage = v_edges[grid].usage;
@@ -466,7 +458,7 @@ Bool newRipupCheck_atomic(TreeEdge* treeedge, int ripup_threshold, int netID,
           if (h_edges[grid].usage.compare_exchange_weak(old_usage,
                                                         old_usage - 1)) {
             break_edge = i;
-            needRipup  = TRUE;
+            needRipup  = true;
             break;
           }
           old_usage = h_edges[grid].usage;
@@ -497,9 +489,9 @@ Bool newRipupCheck_atomic(TreeEdge* treeedge, int ripup_threshold, int netID,
         }
       }
 
-      return (TRUE);
+      return (true);
     } else {
-      return (FALSE);
+      return (false);
     }
   } else {
     printf("route type is not maze, netID %d\n", netID);
@@ -510,14 +502,14 @@ Bool newRipupCheck_atomic(TreeEdge* treeedge, int ripup_threshold, int netID,
   }
 }
 
-Bool newRipupCheck_sort(TreeEdge* treeedge, int ripup_threshold, int netID,
+bool newRipupCheck_sort(TreeEdge* treeedge, int ripup_threshold, int netID,
                         int edgeID, bool& is_horizontal, int& grid_pos) {
   short *gridsX, *gridsY;
   int i, grid, ymin, xmin;
-  Bool needRipup  = FALSE;
+  bool needRipup  = false;
   treeedge->ripup = false;
   if (treeedge->len == 0) {
-    return (FALSE);
+    return (false);
   } // not ripup for degraded edge
 
   if (treeedge->route.type == MAZEROUTE) {
@@ -530,7 +522,7 @@ Bool newRipupCheck_sort(TreeEdge* treeedge, int ripup_threshold, int netID,
         grid = ymin * xGrid + gridsX[i];
         if (v_edges[grid].usage + v_edges[grid].red >=
             vCapacity - ripup_threshold) {
-          needRipup     = TRUE;
+          needRipup     = true;
           is_horizontal = false;
           grid_pos      = grid;
           break;
@@ -542,7 +534,7 @@ Bool newRipupCheck_sort(TreeEdge* treeedge, int ripup_threshold, int netID,
         grid = gridsY[i] * (xGrid - 1) + xmin;
         if (h_edges[grid].usage + h_edges[grid].red >=
             hCapacity - ripup_threshold) {
-          needRipup     = TRUE;
+          needRipup     = true;
           is_horizontal = true;
           grid_pos      = grid;
           break;
@@ -573,9 +565,9 @@ Bool newRipupCheck_sort(TreeEdge* treeedge, int ripup_threshold, int netID,
           }
       }*/
 
-      return (TRUE);
+      return (true);
     } else {
-      return (FALSE);
+      return (false);
     }
   } else {
     printf("route type is not maze, netID %d\n", netID);
@@ -586,14 +578,14 @@ Bool newRipupCheck_sort(TreeEdge* treeedge, int ripup_threshold, int netID,
   }
 }
 
-Bool newRipupCheck_nosub(TreeEdge* treeedge, int ripup_threshold, int netID,
+bool newRipupCheck_nosub(TreeEdge* treeedge, int ripup_threshold, int netID,
                          int edgeID) {
   short *gridsX, *gridsY;
   int i, grid, ymin, xmin;
-  Bool needRipup = FALSE;
+  bool needRipup = false;
 
   if (treeedge->len == 0) {
-    return (FALSE);
+    return (false);
   } // not ripup for degraded edge
 
   if (treeedge->route.type == MAZEROUTE) {
@@ -606,7 +598,7 @@ Bool newRipupCheck_nosub(TreeEdge* treeedge, int ripup_threshold, int netID,
         grid = ymin * xGrid + gridsX[i];
         if (v_edges[grid].usage + v_edges[grid].red >=
             vCapacity - ripup_threshold) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
 
@@ -616,7 +608,7 @@ Bool newRipupCheck_nosub(TreeEdge* treeedge, int ripup_threshold, int netID,
         grid = gridsY[i] * (xGrid - 1) + xmin;
         if (h_edges[grid].usage + h_edges[grid].red >=
             hCapacity - ripup_threshold) {
-          needRipup = TRUE;
+          needRipup = true;
           break;
         }
       }
@@ -643,9 +635,9 @@ Bool newRipupCheck_nosub(TreeEdge* treeedge, int ripup_threshold, int netID,
           }
       }*/
 
-      return (TRUE);
+      return (true);
     } else {
-      return (FALSE);
+      return (false);
     }
   } else {
     printf("route type is not maze, netID %d\n", netID);
@@ -656,7 +648,7 @@ Bool newRipupCheck_nosub(TreeEdge* treeedge, int ripup_threshold, int netID,
   }
 }
 
-Bool newRipup3DType3(int netID, int edgeID) {
+bool newRipup3DType3(int netID, int edgeID) {
   short *gridsX, *gridsY, *gridsL;
   int i, k, grid, ymin, xmin, n1a, n2a, hl, bl, hid, bid, deg;
 
@@ -667,7 +659,7 @@ Bool newRipup3DType3(int netID, int edgeID) {
   treeedge  = &(treeedges[edgeID]);
 
   if (treeedge->len == 0) {
-    return (FALSE); // not ripup for degraded edge
+    return (false); // not ripup for degraded edge
   }
 
   treenodes = sttrees[netID].nodes;
@@ -776,13 +768,13 @@ Bool newRipup3DType3(int netID, int edgeID) {
         h_edges3D[grid].usage -= 1;
       } else {
         printf("MAZE RIPUP WRONG\n");
-        return (FALSE);
+        return (false);
         // exit(1);
       }
     }
   }
 
-  return (TRUE);
+  return (true);
 }
 
 void newRipupNet(int netID) {
@@ -890,4 +882,5 @@ void newRipupNet(int netID) {
   }
 }
 
-#endif
+
+}

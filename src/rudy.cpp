@@ -1,7 +1,8 @@
-#ifndef RUDY_H
-#define RUDY_h
+#include "sproute.h"
 
-void plot_rudy(float* rudy, Algo algo) {
+namespace sproute {
+
+void SPRoute::PlotRudy(float* rudy, Algo algo) {
 
     cout << xGrid << " " << yGrid << " grid" << endl;
     
@@ -106,7 +107,7 @@ void plot_rudy(float* rudy, Algo algo) {
 
 
 
-float plot_pin_density(float* pin_density, Algo algo) {
+float SPRoute::PlotPinDensity(float* pin_density, Algo algo) {
 
     cout << xGrid << " " << yGrid << " grid" << endl;
     
@@ -205,7 +206,7 @@ float plot_pin_density(float* pin_density, Algo algo) {
 }
 
 
-void plot_drc_map() {
+void SPRoute::PlotDrcMap() {
 
     ifstream infile("ispd19_test7_metal5.sproute.georpt");
 
@@ -244,10 +245,10 @@ void plot_drc_map() {
             y1 *= dbuPerMicro;
             y2 *= dbuPerMicro;
 
-            int x_start = sproute::find_Gcell((int) x1, defDB.xGcellBoundaries); //all are inclusive
-            int x_end   = sproute::find_Gcell((int) x2, defDB.xGcellBoundaries);
-            int y_start = sproute::find_Gcell((int) y1, defDB.yGcellBoundaries);
-            int y_end   = sproute::find_Gcell((int) y2, defDB.yGcellBoundaries);
+            int x_start = sproute_db::find_Gcell((int) x1, defDB.xGcellBoundaries); //all are inclusive
+            int x_end   = sproute_db::find_Gcell((int) x2, defDB.xGcellBoundaries);
+            int y_start = sproute_db::find_Gcell((int) y1, defDB.yGcellBoundaries);
+            int y_end   = sproute_db::find_Gcell((int) y2, defDB.yGcellBoundaries);
 
             int x_mid = (x_start + x_end) / 2;
             int y_mid = (y_start + y_end) / 2;
@@ -318,4 +319,124 @@ void plot_drc_map() {
 
 }
 
-#endif
+void SPRoute::RUDY_scheduler(int iter, int max_overflow, int counted_num_part, std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done) {
+  int max_parts = 512;
+  vecParts.resize(max_parts);
+  cout << "RUDY scheduling" << endl;
+  galois::LargeArray<float> rudy;
+  float max_rudy[max_parts];
+  rudy.allocateBlocked(max_parts * xGrid * yGrid);
+
+  float rudy_threshold = 0.05;
+  int find = 0, end = 0;
+
+  galois::do_all(galois::iterate((int)0, max_parts * xGrid * yGrid),[&](int i) {
+    rudy[i] = 0;
+  });
+
+  for(int netID = 0; netID < numValidNets; netID++) {
+    if(done[netID])
+      continue;
+
+    int batch_offset = 0;
+    int min_x = xGrid + 1;
+    int min_y = yGrid + 1;
+    int max_x = 0;
+    int max_y = 0;
+
+    int deg = nets[netID]->deg;
+    TreeEdge* treeedges = sttrees[netID].edges;
+    TreeNode* treenodes = sttrees[netID].nodes;
+
+    int num_edges = 2 * deg - 3;
+    float wirelength = 0;
+    for (int edgeID = 0; edgeID < num_edges; edgeID++) {
+        TreeEdge* treeedge = &(treeedges[edgeID]);
+        /*if(netID == 516) {
+          cout << "netID 516 wirelength: " << treeedge->route.routelen << endl;
+          int      n1            = treeedge->n1;
+          int      n2            = treeedge->n2;
+          int      n1x           = treenodes[n1].x;
+          int      n1y           = treenodes[n1].y;
+          int      n2x           = treenodes[n2].x;
+          int      n2y           = treenodes[n2].y;
+          cout << "( " << n1x << ", " << n1y << ") ("<< n2x << ", " << n2y << ") " << endl;
+        }*/
+        if(treeedge->route.routelen > 0)
+          wirelength += treeedge->route.routelen;
+    }
+
+
+    min_x = sttrees[netID].x_min;
+    max_x = sttrees[netID].x_max;
+    min_y = sttrees[netID].y_min;
+    max_y = sttrees[netID].y_max;
+    
+
+    float HPWL = max_x - min_x + max_y - min_y;
+    float extra_wl = wirelength - HPWL;
+    /*if(extra_wl < 0) {
+      cout << "Error: extra_WL < 0, impossible: netID " << netID << " HPWL: " << HPWL << " wirelength: " << wirelength << endl;
+      exit(1);
+    }*/
+    float local_rudy = wirelength / ((float) (max_x - min_x + 1 + extra_wl / 2) * (float) (max_y - min_y + 1 + extra_wl / 2));
+
+    int enlarge = extra_wl / 4;
+
+
+    for(int batchID = batch_offset; batchID < max_parts + batch_offset; batchID++) {
+      int offset = (batchID % max_parts) * xGrid * yGrid;
+      float batch_max_rudy = 0;
+
+      if(iter > 1 && vecParts[batchID % max_parts].size() >= max_overflow && batchID != max_parts + batch_offset - 1 )
+        continue;
+      if(vecParts[batchID % max_parts].size() == 0) {
+        vecParts[batchID % max_parts].push_back(netID);
+        for(int x = max(0, min_x - enlarge); x <= min(xGrid - 1, max_x + enlarge); x++) {
+          for(int y = max(0, min_y - enlarge); y <= min(yGrid - 1, max_y + enlarge); y++) {
+            int grid = offset + y * xGrid + x;
+            rudy[grid] += local_rudy;
+          }
+        }
+        break;
+      }
+      else {
+        for(int x = max(0, min_x - enlarge); x <= min(xGrid - 1, max_x + enlarge); x++) {
+          for(int y = max(0, min_y - enlarge); y <= min(yGrid - 1, max_y + enlarge); y++) {
+            int grid = offset + y * xGrid + x;
+            batch_max_rudy = max(batch_max_rudy,  rudy[grid]);
+            if(batch_max_rudy + local_rudy > rudy_threshold)
+              break;
+          }
+          if(batch_max_rudy + local_rudy > rudy_threshold)
+              break;
+        }
+        if(batch_max_rudy == 0 || batch_max_rudy + local_rudy <= rudy_threshold || batchID == max_parts + batch_offset - 1) {
+          vecParts[batchID % max_parts].push_back(netID);
+          if(batchID == max_parts + batch_offset - 1)
+            end++;
+          else find++;
+          for(int x = max(0, min_x - enlarge); x <= min(xGrid - 1, max_x + enlarge); x++) {
+            for(int y = max(0, min_y - enlarge); y <= min(yGrid - 1, max_y + enlarge); y++) {
+              int grid = offset + y * xGrid + x;
+              rudy[grid] += local_rudy;
+            }
+          }
+          break;
+        }
+      }
+    }
+  }
+
+  for(int batchID = 0; batchID < max_parts; batchID++) {
+    cout << vecParts[batchID].size() << " ";
+  }
+  cout << endl;
+  cout << "RUDY scheduling done, find: " << find << " end: " << end << endl;
+  rudy.destroy();
+
+}
+
+
+
+} //namespace sproute

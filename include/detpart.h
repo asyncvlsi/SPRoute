@@ -4,44 +4,6 @@
 #include <vector>
 #include "galois/LargeArray.h"
 
-
-
-bool checkIfDone(TreeEdge* treeedge) {
-    short *gridsX, *gridsY;
-    int grid, ymin, xmin;
-    
-    if (treeedge->len == 0) {
-        return true;
-    }
-    
-    gridsX = treeedge->route.gridsX;
-    gridsY = treeedge->route.gridsY;
-
-    for (int i = 0; i < treeedge->route.routelen; i++) {
-	    if (gridsX[i] == gridsX[i + 1]) // a vertical edge
-        {   
-            ymin = min(gridsY[i], gridsY[i + 1]);
-            grid = ymin * xGrid + gridsX[i];
-        //
-        //if( v_edges[grid].usage + v_edges[grid].red > vCapacity - ripup_threshold)
-            if(v_edges[grid].usage > v_edges[grid].cap)	
-                return false;
-   	    } 
-		else if (gridsY[i] == gridsY[i + 1]) {// a horizontal edge 
-            xmin = min(gridsX[i], gridsX[i + 1]);
-            grid = gridsY[i] * (xGrid - 1) + xmin;
-        //   if(h_edges[grid].usage + h_edges[grid].red > hCapacity - ripup_threshold)
-            if(h_edges[grid].usage > h_edges[grid].cap) 
-                return false;
-        }
-        else {
-            cout << "error in checkIfDone" << endl;
-            exit(1);
-        }
-    }
-	return true;
-}
-
 Bool newRipupCheck_atomic_deterministic(TreeEdge* treeedge, int ripup_threshold, int netID,
                           int edgeID, Edge* h_edges_local, Edge* v_edges_local){ 
   short *gridsX, *gridsY;

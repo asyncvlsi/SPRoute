@@ -1,7 +1,8 @@
-#ifndef INVALIDNETS_ADJ_H
-#define INVALIDNETS_ADJ_H
+#include "sproute.h"
 
-int invalidNetsAdjLayer(int x, int y, int l, int xGrid, int yGrid) {
+namespace sproute {
+
+int SPRoute::InvalidNetsAdjLayer(int x, int y, int l, int xGrid, int yGrid) {
 
     int adj = 0;
     if (lefDB.layers.at(l * 2).direction == "HORIZONTAL")//horizontal 
@@ -69,7 +70,7 @@ int invalidNetsAdjLayer(int x, int y, int l, int xGrid, int yGrid) {
 
 }
 
-void invalidNetsAdj(Net** invalid_nets, int xGrid, int yGrid) {
+void SPRoute::InvalidNetsAdj(Net** invalid_nets, int xGrid, int yGrid) {
 
     int num_adj = 0;
     for(int i = 0 ; i < numInvalidNets; i++) {
@@ -86,12 +87,11 @@ void invalidNetsAdj(Net** invalid_nets, int xGrid, int yGrid) {
             exit(1);
         }
 
-        num_adj += invalidNetsAdjLayer(x, y, 1, xGrid, yGrid);
-        num_adj += invalidNetsAdjLayer(x, y, 2, xGrid, yGrid);
+        num_adj += InvalidNetsAdjLayer(x, y, 1, xGrid, yGrid);
+        num_adj += InvalidNetsAdjLayer(x, y, 2, xGrid, yGrid);
     }
     cout << "num of invalid net : " << numInvalidNets << "adj: " << num_adj << endl;
 
 }
 
-
-#endif
+}
