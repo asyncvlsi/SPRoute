@@ -8,7 +8,7 @@ void SPRoute::PlotRudy(float* rudy, Algo algo) {
     
 
     for(int i = 0; i < xGrid * yGrid; i++)
-        rudy[i] == 0;
+        rudy[i] = 0;
 
 
     for(int netID = 0; netID < numValidNets; netID++) {
@@ -113,7 +113,7 @@ float SPRoute::PlotPinDensity(float* pin_density, Algo algo) {
     
     float pin_density_sum = 0;
     for(int i = 0; i < xGrid * yGrid; i++)
-        pin_density[i] == 0;
+        pin_density[i] = 0;
 
 
     for(int netID = 0; netID < numValidNets; netID++) {

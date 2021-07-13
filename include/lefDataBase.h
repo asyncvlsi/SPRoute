@@ -281,7 +281,7 @@ public:
     }
     void reset()
     {
-        layerName == "";
+        layerName = "";
         rects.clear();
     }
 };
