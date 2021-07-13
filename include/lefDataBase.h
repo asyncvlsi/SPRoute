@@ -446,7 +446,7 @@ public:
 };
 
 
-int getLefMacros(lefrCallbackType_e , lefiMacro* , lefiUserData );
+/*int getLefMacros(lefrCallbackType_e , lefiMacro* , lefiUserData );
 int getLefString(lefrCallbackType_e , const char* , lefiUserData );
 int getLefUnits(lefrCallbackType_e , lefiUnits* , lefiUserData );
 int getLefManufacturingGrid(lefrCallbackType_e , double , lefiUserData );
@@ -454,7 +454,7 @@ int getLefPins(lefrCallbackType_e , lefiPin* , lefiUserData );
 int getLefObs(lefrCallbackType_e , lefiObstruction* , lefiUserData );
 int getLefLayers(lefrCallbackType_e , lefiLayer* , lefiUserData );
 int getLefVias(lefrCallbackType_e , lefiVia* , lefiUserData );
-int getLefViaGenerateRules(lefrCallbackType_e , lefiViaRule* , lefiUserData );
+int getLefViaGenerateRules(lefrCallbackType_e , lefiViaRule* , lefiUserData );*/
 
 } //namespace sproute_db
 

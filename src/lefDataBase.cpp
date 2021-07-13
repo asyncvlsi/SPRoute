@@ -8,7 +8,7 @@ namespace sproute_db
 
 
 
-int getLefMacros(lefrCallbackType_e type, lefiMacro* macro, lefiUserData data) {
+/*int getLefMacros(lefrCallbackType_e type, lefiMacro* macro, lefiUserData data) {
     //bool enableOutput = true;
     bool enableOutput = false;
     if ((type != lefrMacroCbkType)) {
@@ -560,7 +560,7 @@ int getLefViaGenerateRules(lefrCallbackType_e type, lefiViaRule* viaRule, lefiUs
     tmpViaRule.print();
 
   return 0;
-}
+}*/
 
 }//namespace sproute_db
 

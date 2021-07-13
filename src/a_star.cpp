@@ -1,52 +1,175 @@
-#include "maze.h"
+#include "a_star.h"
 #include "sproute.h"
+
 namespace sproute {
 
-void SPRoute::UndoneFilter(galois::LargeArray<bool> &done) {
-    galois::GAccumulator<uint32_t> count;
-    galois::do_all(galois::iterate((int)0, numValidNets),[&](int netID) {
-          
-          int deg = sttrees[netID].deg;
+// ripup a tree edge according to its ripup type and Z-route it
+// put all the nodes in the subtree t1 and t2 into heap1 and heap2
+// netID   - the ID for the net
+// edgeID  - the ID for the tree edge to route
+// d1      - the distance of any grid from the source subtree t1
+// pq1     - the priority queue stored the node, cost from src, distance to dst
+// v2      - the vector stored the destination nodes
+void setupHeap_astar(int netID, int edgeID, astar_local_pq& pq1, local_vec& v2,
+               int regionX1, int regionX2, int regionY1, int regionY2,
+               float** d1, int** corrEdge, bool** inRegion, float astar_weight) {
+  int i, j, d, numNodes, n1, n2, x1, y1, x2, y2;
+  int nbr, nbrX, nbrY, cur, edge;
+  int x_grid, y_grid;
+  int queuehead, queuetail, *queue;
+  bool* visited;
+  TreeEdge* treeedges;
+  TreeNode* treenodes;
+  Route* route;
 
-          TreeEdge* treeedges = sttrees[netID].edges;
-          TreeNode* treenodes = sttrees[netID].nodes;
-          int num_edges = 2 * deg - 3;
+  for (i = regionY1; i <= regionY2; i++) {
+    for (j = regionX1; j <= regionX2; j++)
+      inRegion[i][j] = true;
+  }
 
-			    bool flag = true;
-            
-          for (int edgeID = 0; edgeID < num_edges; edgeID++) {
-              TreeEdge* treeedge = &(treeedges[edgeID]);
-              
-              flag = flag && checkIfDone(treeedge);
-          }
-          if (flag) {
-              count += 1;
-              done[netID] = true;
-              return;
-        	}
-          else {
-            sttrees[netID].x_min = xGrid - 1;
-            sttrees[netID].x_max = 0;
-            sttrees[netID].y_min = yGrid - 1;
-            sttrees[netID].y_max = 0;
+  treeedges = sttrees[netID].edges;
+  treenodes = sttrees[netID].nodes;
+  d         = sttrees[netID].deg;
 
-            for (int i = 0; i < deg; i++) {
-                sttrees[netID].x_min = min(treenodes[i].x, sttrees[netID].x_min);
-                sttrees[netID].x_max = max(treenodes[i].x, sttrees[netID].x_max);
-                sttrees[netID].y_min = min(treenodes[i].y, sttrees[netID].y_min);
-                sttrees[netID].y_max = max(treenodes[i].y, sttrees[netID].y_max);
-              
-            }
-          }
-        });
-    acc_count += count.reduce();
+  n1 = treeedges[edgeID].n1;
+  n2 = treeedges[edgeID].n2;
+  x1 = treenodes[n1].x;
+  y1 = treenodes[n1].y;
+  x2 = treenodes[n2].x;
+  y2 = treenodes[n2].y;
+
+  // if(netID == 14628)
+  //    printf("net: %d edge: %d src: %d %d dst: %d %d d: %d\n", netID, edgeID,
+  //    y1, x1, y2, x2, d);
+  pq1.clear();
+  v2.clear(); // Michael
+  if (d == 2) // 2-pin net
+  {
+    d1[y1][x1] = 0;
+    float dst_dist = astar_weight * (fabs(x1 - x2) + fabs(y1 - y2));
+    pq1.push({&(d1[y1][x1]), 0, dst_dist});
+    v2.push_back(y2 * xGrid + x2);
+  } else // net with more than 2 pins
+  {
+    numNodes = 2 * d - 2;
+
+    visited = (bool*)calloc(numNodes, sizeof(bool));
+    for (i = 0; i < numNodes; i++)
+      visited[i] = false;
+
+    queue = (int*)calloc(numNodes, sizeof(int));
+
+    // find all the grids on tree edges in subtree t1 (connecting to n1) and put
+    // them into heap1
+    if (n1 < d) // n1 is a Pin node
+    {
+      // just need to put n1 itself into heap1
+      d1[y1][x1] = 0;
+      float dst_dist = astar_weight * (fabs(x1 - x2) + fabs(y1 - y2));
+      pq1.push({&(d1[y1][x1]), 0, dst_dist});
+      visited[n1] = true;
+    } else // n1 is a Steiner node
+    {
+      queuehead = queuetail = 0;
+
+      // add n1 into heap1
+      d1[y1][x1] = 0;
+      float dst_dist = astar_weight * (fabs(x1 - x2) + fabs(y1 - y2));
+      pq1.push({&(d1[y1][x1]), 0, dst_dist});
+      visited[n1] = true;
+
+      // add n1 into the queue
+      queue[queuetail] = n1;
+      queuetail++;
+
+      // loop to find all the edges in subtree t1
+      while (queuetail > queuehead) {
+        // get cur node from the queuehead
+        cur = queue[queuehead];
+        queuehead++;
+        visited[cur] = true;
+        if (cur >= d) // cur node is a Steiner node
+        {
+          for (i = 0; i < 3; i++) {
+            nbr  = treenodes[cur].nbr[i];
+            edge = treenodes[cur].edge[i];
+
+            if (nbr != n2) // not n2
+            {
+              if (visited[nbr] == false) {
+                // put all the grids on the two adjacent tree edges into heap1
+                if (treeedges[edge].route.routelen > 0) // not a degraded edge
+                {
+                  // put nbr into heap1 if in enlarged region
+                  if (inRegion[treenodes[nbr].y][treenodes[nbr].x]) {
+                    nbrX           = treenodes[nbr].x;
+                    nbrY           = treenodes[nbr].y;
+                    d1[nbrY][nbrX] = 0;
+                    dst_dist = astar_weight * (fabs(nbrX - x2) + fabs(nbrY - y2));
+                    pq1.push({&(d1[nbrY][nbrX]), 0, dst_dist});
+                    corrEdge[nbrY][nbrX] = edge;
+                  }
+
+                  // the coordinates of two end nodes of the edge
+
+                  route = &(treeedges[edge].route);
+                  if (route->type == MAZEROUTE) {
+                    for (j = 1; j < route->routelen;
+                         j++) // don't put edge_n1 and edge_n2 into heap1
+                    {
+                      x_grid = route->gridsX[j];
+                      y_grid = route->gridsY[j];
+
+                      if (inRegion[y_grid][x_grid]) {
+                        d1[y_grid][x_grid] = 0;
+
+                        dst_dist = astar_weight * (fabs(x_grid - x2) + fabs(y_grid - y2));
+                        pq1.push({&(d1[y_grid][x_grid]), 0, dst_dist});
+                        corrEdge[y_grid][x_grid] = edge;
+                      }
+                    }
+                  } // if MAZEROUTE
+                  else {
+                    printf("Setup Heap: not maze routing\n");
+                  }
+                } // if not a degraded edge (len>0)
+
+                // add the neighbor of cur node into queue
+                queue[queuetail] = nbr;
+                queuetail++;
+              } // if the node is not visited
+            }   // if nbr!=n2
+          }     // loop i (3 neigbors for cur node)
+        }       // if cur node is a Steiner nodes
+      }         // while queue is not empty
+    }           // else n1 is not a Pin node
+
+    // find all the grids on subtree t2 (connect to n2) and put them into heap2
+    // find all the grids on tree edges in subtree t2 (connecting to n2) and put
+    // them into heap2
+    if (1  /*n2 < d*/ ) // in astar, only 1 destination node
+    {
+      // just need to put n2 itself into heap2
+      v2.push_back(y2 * xGrid + x2);
+      visited[n2] = true;
+    } 
+
+    free(queue);
+    free(visited);
+  } // net with more than two pins
+
+  for (i = regionY1; i <= regionY2; i++) {
+    for (j = regionX1; j <= regionX2; j++)
+      inRegion[i][j] = false;
+  }
 }
 
-void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_threshold,
-                   int mazeedge_Threshold, bool Ordering, int cost_type, galois::LargeArray<bool>& done,
-                   galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>& thread_local_storage) {
+void SPRoute::mazeRouteMSMD_astar(int iter, int expand, float costHeight, int ripup_threshold,
+                   int mazeedge_Threshold, bool Ordering, int cost_type, float astar_weight, galois::LargeArray<bool>& done) {
   // LOCK = 0;
   float forange;
+  cout << "running astar! astar weight: " << astar_weight << endl;
+
   // allocate memory for distance and parent and pop_heap
   h_costTable = (float*)calloc(40 * hCapacity, sizeof(float));
   v_costTable = (float*)calloc(40 * vCapacity, sizeof(float));
@@ -109,10 +232,11 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
     // printf("order?\n");
   }
 
+  galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>
+      thread_local_storage{};
   // for(nidRPC=0; nidRPC<numValidNets; nidRPC++)//parallelize
-  PerThread_PQ perthread_pq;
+  astar_PerThread_PQ perthread_pq;
   PerThread_Vec perthread_vec;
-
   galois::GAccumulator<int> total_ripups;
   galois::GReduceMax<int> max_ripups;
   total_ripups.reset();
@@ -172,8 +296,8 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
 
         bool** inRegion = thread_local_storage.getLocal()->inRegion_p;
 
-        local_pq pq1 = perthread_pq.get();
-        local_vec v2 = perthread_vec.get();
+        astar_local_pq pq1 = perthread_pq.get(); //local_pq is galois::gstl::PQ<pq_grid, pq_less>
+        local_vec v2 = perthread_vec.get(); //local_vec is galois::gstl::Vector<int>
 
         /*for(i=0; i<yGrid*xGrid; i++)
         {
@@ -212,21 +336,22 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
         bool flag = true;
             
         for (int edgeID = 0; edgeID < num_edges; edgeID++) {
-          treeedge = &(treeedges[edgeID]);
-          flag = flag && checkIfDone(treeedge);
+            treeedge = &(treeedges[edgeID]);
+
+            flag = flag && checkIfDone(treeedge);
         }
 
         if (done[netID]) {
-          cout << "this net is done, should not be here" << netID << " " << flag <<  endl;
-          exit(1);
+            cout << "this net is done, should not be here" << netID << " " << flag <<  endl;
+            exit(1);
         }
 
         if (flag) {
-          count += 1;
-          done[netID] = true;
-          return;
+              count += 1;
+              done[netID] = true;
+              return;
         }
-        //cout << "running: " << nets[netID]->name << endl;
+
         for (edgeREC = 0; edgeREC < num_edges; edgeREC++) {
           edgeID   = netEO[edgeREC].edgeID;
           treeedge = &(treeedges[edgeID]);
@@ -310,8 +435,8 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
 
               // setup heap1, heap2 and initialize d1[][] and d2[][] for all the
               // grids on the two subtrees
-              setupHeap(netID, edgeID, pq1, v2, regionX1, regionX2, regionY1,
-                        regionY2, d1, corrEdge, inRegion);
+              setupHeap_astar(netID, edgeID, pq1, v2, regionX1, regionX2, regionY1,
+                        regionY2, d1, corrEdge, inRegion, astar_weight);
               // TODO: use std priority queue
               // while loop to find shortest path
               ind1 = (pq1.top().d1_p - &d1[0][0]);
@@ -322,6 +447,14 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
               for (local_vec::iterator ii = v2.begin(); ii != v2.end(); ii++) {
                 pop_heap2[*ii] = true;
               }
+
+              if(v2.size() != 1) {
+                  cout << "error: more than 1 destinations" << endl;
+                  exit(1);
+              }
+
+              int dst_x = v2[0] % xGrid;
+              int dst_y = v2[0] / xGrid;
               float curr_d1;
               while (pop_heap2[ind1] ==
                      false) // stop until the grid position been popped out from
@@ -358,7 +491,7 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
                                       (int)(L * h_edges[grid].last_usage)];
                   } else {
                     if (curX < regionX2 - 1) {
-                      tmp_grid = curY * (xGrid - 1) + curX; //usage curr-right
+                      tmp_grid = curY * (xGrid - 1) + curX; //usagfe curr-right
                       tmp_cost =
                           d1[curY][curX + 1] +
                           h_costTable[h_edges[tmp_grid].usage +
@@ -381,13 +514,14 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
                   // if(LOCK)  h_edges[grid].releaseLock();
 
                   if (d1[curY][tmpX] >
-                      tmp && h_edges[grid].cap > 0) // left neighbor been put into heap1 but needs update
+                      tmp) // left neighbor been put into heap1 but needs update
                   {
+                    float dst_dist = astar_weight * (fabs(tmpX - dst_x) + fabs(curY - dst_y));
                     d1[curY][tmpX]       = tmp;
                     parentX3[curY][tmpX] = curX;
                     parentY3[curY][tmpX] = curY;
                     HV[curY][tmpX]       = false;
-                    pq1.push({&(d1[curY][tmpX]), tmp});
+                    pq1.push({&(d1[curY][tmpX]), tmp, dst_dist});
                     total_queue_cnt += 1;
                   }
                 }
@@ -423,14 +557,15 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
                                       (int)(L * h_edges[grid].last_usage)];
                   }
 
-                  if (d1[curY][tmpX] > tmp && h_edges[grid].cap > 0) // right neighbor been put into
-                                            // heap1 but needs update, hard stop for OBS
+                  if (d1[curY][tmpX] > tmp) // right neighbor been put into
+                                            // heap1 but needs update
                   {
+                    float dst_dist = astar_weight * (fabs(tmpX - dst_x) + fabs(curY - dst_y));
                     d1[curY][tmpX]       = tmp;
                     parentX3[curY][tmpX] = curX;
                     parentY3[curY][tmpX] = curY;
                     HV[curY][tmpX]       = false;
-                    pq1.push({&(d1[curY][tmpX]), tmp});
+                    pq1.push({&(d1[curY][tmpX]), tmp, dst_dist});
                     total_queue_cnt += 1;
                   }
                 }
@@ -466,14 +601,15 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
                                       (int)(L * v_edges[grid].last_usage)];
                   }
 
-                  if (d1[tmpY][curX] > tmp && v_edges[grid].cap > 0) // bottom neighbor been put into
+                  if (d1[tmpY][curX] > tmp) // bottom neighbor been put into
                                             // heap1 but needs update
                   {
+                    float dst_dist = astar_weight * (fabs(curX - dst_x) + fabs(tmpY - dst_y));
                     d1[tmpY][curX]       = tmp;
                     parentX1[tmpY][curX] = curX;
                     parentY1[tmpY][curX] = curY;
                     HV[tmpY][curX]       = true;
-                    pq1.push({&(d1[tmpY][curX]), tmp});
+                    pq1.push({&(d1[tmpY][curX]), tmp, dst_dist});
                     total_queue_cnt += 1;
                   }
                 }
@@ -509,13 +645,14 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
                                       (int)(L * v_edges[grid].last_usage)];
                   }
                   if (d1[tmpY][curX] >
-                      tmp && v_edges[grid].cap > 0) // top neighbor been put into heap1 but needs update
+                      tmp) // top neighbor been put into heap1 but needs update
                   {
+                    float dst_dist = astar_weight * (fabs(curX - dst_x) + fabs(tmpY - dst_y));
                     d1[tmpY][curX]       = tmp;
                     parentX1[tmpY][curX] = curX;
                     parentY1[tmpY][curX] = curY;
                     HV[tmpY][curX]       = true;
-                    pq1.push({&(d1[tmpY][curX]), tmp});
+                    pq1.push({&(d1[tmpY][curX]), tmp, dst_dist});
                     total_queue_cnt += 1;
                   }
                 }
@@ -525,21 +662,19 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
                 float d1_push;
                 do {
                   if(pq1.size() <= 0) {
-                    cout << "ERROR: priority queue empty! " << endl; 
-                    cout << "netid: " << netID << " netName: " << nets[netID]->name << " edgeid: " << edgeID << endl;
-                    bool n1_steiner = (n1 < deg)? true: false;
-                    bool n2_steiner = (n2 < deg)? true: false;
-                    cout << n1_steiner << " " << n2_steiner << endl;
-                    cout << n1x << "," << n1y << " " << n2x << "," << n2y << endl;
-                    exit(1);
+                      cout << "ERROR: priority queue empty! " << endl; 
+                      cout << "netid: " << netID << " netName: " << nets[netID]->name << " edgeid: " << edgeID << endl;
+                      bool n1_steiner = (n1 < deg)? true: false;
+                      bool n2_steiner = (n2 < deg)? true: false;
+                      cout << n1_steiner << " " << n2_steiner << endl;
+                      cout << n1x << "," << n1y << " " << n2x << "," << n2y << endl;
+                      exit(1);
                   }
                   ind1    = pq1.top().d1_p - &d1[0][0];
                   d1_push = pq1.top().d1_push;
                   pq1.pop();
-                  
                   curX = ind1 % xGrid;
                   curY = ind1 / xGrid;
-                  
                 } while (d1_push != d1[curY][curX]);
               } // while loop
 
@@ -875,22 +1010,75 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
 
               // update edge usage
 
+              /*for(i=0; i<pre_length; i++)
+              {
+                  if(pre_gridsX[i]==pre_gridsX[i+1]) // a vertical edge
+                  {
+                      if(i != pre_length - 1)
+                          min_y = min(pre_gridsY[i], pre_gridsY[i+1]);
+                      else
+                          min_y = pre_gridsY[i];
+                      //v_edges[min_y*xGrid+gridsX[i]].usage += 1;
+                      //galois::atomicAdd(v_edges[min_y*xGrid+gridsX[i]].usage,
+              (short unsigned)1);
+                      //printf("x y %d %d i %d \n", pre_gridsX[i], min_y, i);
+                      v_edges[min_y*xGrid+pre_gridsX[i]].usage.fetch_sub((short
+              int)1);
+                      //if(v_edges[min_y*xGrid+pre_gridsX[i]].usage < 0)
+              printf("V negative! %d \n", i);
+                  }
+                  else ///if(gridsY[i]==gridsY[i+1])// a horizontal edge
+                  {
+                      if(i != pre_length - 1)
+                          min_x = min(pre_gridsX[i], pre_gridsX[i+1]);
+                      else
+                          min_x = pre_gridsX[i];
+                      //h_edges[gridsY[i]*(xGrid-1)+min_x].usage += 1;
+                      //galois::atomicAdd(h_edges[gridsY[i]*(xGrid-1)+min_x].usage,
+              (short unsigned)1);
+                      //printf("x y %d %d i %d\n", min_x, pre_gridsY[i], i);
+                      h_edges[pre_gridsY[i]*(xGrid-1)+min_x].usage.fetch_sub((short
+              int)1);
+                      //if(h_edges[pre_gridsY[i]*(xGrid-1)+min_x].usage < 0)
+              printf("H negative! %d \n", i);
+                  }
+              }*/
+
               for (i = 0; i < cnt_n1n2 - 1; i++) {
                 if (gridsX[i] == gridsX[i + 1]) // a vertical edge
                 {
                   min_y = min(gridsY[i], gridsY[i + 1]);
+                  // v_edges[min_y*xGrid+gridsX[i]].usage += 1;
+                  // galois::atomicAdd(v_edges[min_y*xGrid+gridsX[i]].usage,
+                  // (short unsigned)1);
                   v_edges[min_y * xGrid + gridsX[i]].usage.fetch_add(
                       (short int)1);
- 
+
                 } else /// if(gridsY[i]==gridsY[i+1])// a horizontal edge
                 {
                   min_x = min(gridsX[i], gridsX[i + 1]);
+                  // h_edges[gridsY[i]*(xGrid-1)+min_x].usage += 1;
+                  // galois::atomicAdd(h_edges[gridsY[i]*(xGrid-1)+min_x].usage,
+                  // (short unsigned)1);
                   h_edges[gridsY[i] * (xGrid - 1) + min_x].usage.fetch_add(
                       (short int)1);
- 
                 }
               }
-
+              /*if(LOCK){
+                  for(i=0; i<cnt_n1n2-1; i++)
+                  {
+                      if(gridsX[i]==gridsX[i+1]) // a vertical edge
+                      {
+                          min_y = min(gridsY[i], gridsY[i+1]);
+                          v_edges[min_y*xGrid+gridsX[i]].releaseLock();
+                      }
+                      else ///if(gridsY[i]==gridsY[i+1])// a horizontal edge
+                      {
+                          min_x = min(gridsX[i], gridsX[i+1]);
+                          h_edges[gridsY[i]*(xGrid-1)+min_x].releaseLock();
+                      }
+                  }
+              }*/
               if (checkRoute2DTree(netID)) {
                 reInitTree(netID);
                 return;
@@ -915,8 +1103,6 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
   free(h_costTable);
   free(v_costTable);
 }
-
-
 
 
 } //namespace sproute

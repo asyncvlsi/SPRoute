@@ -47,24 +47,6 @@ else ()
     message(STATUS "libdef.a found")
 endif()
 
-message(STATUS "Detecting environment variable $ENV{GALOIS_INCLUDE}...")
-if (DEFINED ENV{GALOIS_INCLUDE})
-    message(STATUS "Environment variable GALOIS_INCLUDE detected: " $ENV{GALOIS_INCLUDE})
-else ()
-    message(FATAL_ERROR "Environment variable $ENV{GALOIS_INCLUDE} not found")
-endif ()
-include_directories($ENV{GALOIS_INCLUDE})
-link_directories($ENV{GALOIS_LIB})
-find_library(GALOIS_LIB
-    NAMES galois_shmem
-    PATHS $ENV{GALOIS_LIB}
-    REQUIRED)
-if (NOT GALOIS_LIB)
-    message(FATAL_ERROR "libgalois_shmem.a is not found")
-else ()
-    message(STATUS "libgalois_shmem.a found")
-endif()
-
 
 if(GALOIS_ENABLE_VTUNE)
   set(VTune_ROOT /opt/intel/vtune_amplifier)
@@ -96,6 +78,16 @@ if (NOT PHYDB_LIBRARY)
     message(FATAL_ERROR "libphydb.a is not found")
 else ()
     message(STATUS "libphydb.a found")
+endif()
+
+find_library(GALOIS_SHMEM
+    NAMES galois_shmem
+    PATHS $ENV{ACT_HOME}/lib
+    REQUIRED)
+if (NOT GALOIS_SHMEM)
+    message(FATAL_ERROR "libgalois_shmem.a is not found")
+else ()
+    message(STATUS "libgalois_shmem.a found")
 endif()
 
 find_package(Boost 1.69.0 REQUIRED)
@@ -136,8 +128,8 @@ add_subdirectory(test)
 add_library(sproute 
     STATIC
     ${CPP_SOURCES} ${C_SOURCES})
-target_link_libraries(sproute
-    lef def galois_shmem pthread numa)
+target_link_libraries(sproute 
+    lef def galois_shmem pthread numa phydb)
 
 add_executable(lefdef-sproute
     test/main.cpp)

@@ -15,9 +15,10 @@
 #include <set>
 #include <algorithm>
 
-#include "defrReader.hpp"
+#include <phydb/phydb.h>
+//#include "defrReader.hpp"
 //#include "defwWriter.hpp"
-#include "lefrReader.hpp"
+//#include "lefrReader.hpp"
 
 #include "galois/Bag.h"
 #include "galois/Galois.h"

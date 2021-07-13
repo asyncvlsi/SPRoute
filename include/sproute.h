@@ -1,5 +1,5 @@
-#ifndef PWROUTE_H
-#define PWROUTE_H
+#ifndef SPROUTE_H
+#define SPROUTE_H
 
 
 #include "defDataBase.h"
@@ -14,7 +14,7 @@
 namespace sproute {
 
 class SPRoute {
-public:
+private:
     phydb::PhyDB* db_ptr_;
 
     sproute_db::defDataBase defDB;
@@ -27,18 +27,7 @@ public:
 
     int acc_count;
     int numThreads;
-
-    SPRoute() {
-        acc_count = 0;
-        numThreads = 1;
-        algo = NonDet;
-    }
-    SPRoute(phydb::PhyDB* p) {
-        this->LoadPhyDB(p);
-        acc_count = 0;
-        numThreads = 1;
-        algo = NonDet;
-    }
+    int max_iteration;
 
     void LinkTrackToLayer();
     void PreprocessSpacingTable();
@@ -64,8 +53,6 @@ public:
     sproute_db::Range<float> RangeIntersection(sproute_db::Range<float> r1, sproute_db::Range<float> r2);
     sproute_db::Range<int> RangeIntersection(sproute_db::Range<int> r1, sproute_db::Range<int> r2);
 
-    
-
     void LoadPhyDB(phydb::PhyDB* p);
     void LoadPhyDBToLefDB();
     void LoadPhyDBToDefDB();
@@ -82,10 +69,13 @@ public:
     void LoadPhyDBNets();
     void LoadPhyDBGcellGrids();
 
-    void WriteRoutedGrid(FILE* fp, std::set<sproute_db::Point3D<int>>& routedGrid);
-    void WriteRoute3D(char routingfile3D[]);
-    void WriteOverflow(string overflowFile);
+    void WriteGuideToPhydb();
+    void WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Point3D<int>>& routedGrid);
 
+    void WriteGuideToFile(string guideFileName);
+    void WriteRoutedGrid(FILE* fp, std::set<sproute_db::Point3D<int>>& routedGrid);
+    void WriteOverflow(string overflowFile);
+    
     int InvalidNetsAdjLayer(int x, int y, int l, int xGrid, int yGrid);
     void InvalidNetsAdj(Net** invalid_nets, int xGrid, int yGrid);
 
@@ -98,11 +88,68 @@ public:
                    int mazeedge_Threshold, bool Ordering, int cost_type, galois::LargeArray<bool>& done,
                    galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>& thread_local_storage);
 
+    void mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costHeight,
+                          int ripup_threshold, int mazeedge_Threshold,
+                          bool Ordering, int cost_type, int parts,
+                          std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done, 
+                          galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>& thread_local_storage);
+
+    void mazeRouteMSMD_astar(int iter, int expand, float costHeight, int ripup_threshold,
+                   int mazeedge_Threshold, bool Ordering, int cost_type, float astar_weight, galois::LargeArray<bool>& done);
+
     void PlotRudy(float* rudy, Algo algo);
     float PlotPinDensity(float* pin_density, Algo algo);
     void PlotDrcMap();
     void UndoneFilter(galois::LargeArray<bool> &done);
     void RUDY_scheduler(int iter, int max_overflow, int counted_num_part, std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done);
+
+public:
+    ~SPRoute() {}
+    SPRoute() {
+        acc_count = 0;
+        max_iteration = 30;
+        numThreads = 1;
+        algo = NonDet;
+        
+        galois::preAlloc(numThreads * 2);
+        galois::setActiveThreads(numThreads);
+    }
+    SPRoute(phydb::PhyDB* p) {
+        this->LoadPhyDB(p);
+        acc_count = 0;
+        max_iteration = 30;
+        numThreads = 1;
+        algo = NonDet;
+
+        galois::preAlloc(numThreads * 2);
+        galois::setActiveThreads(numThreads);
+    }
+    SPRoute(phydb::PhyDB* p, int numT, std::string algo_str) {
+        this->LoadPhyDB(p);
+        acc_count = 0;
+        max_iteration = 30;
+        numThreads = numT;
+        algo = sproute::StrToAlgo(algo_str);
+
+        galois::preAlloc(numThreads * 2);
+        galois::setActiveThreads(numThreads);
+    }
+
+
+    void SetAlgo(std::string algo_str) {
+        algo = sproute::StrToAlgo(algo_str);
+    }
+
+    void SetNumThreads(int numT) {
+        numThreads = numT;
+    }
+
+    void SetMaxIteration(int max_iter) {
+        max_iteration = max_iter;
+    }
+
+    void Run();
+
 
 };
 

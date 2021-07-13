@@ -1226,6 +1226,8 @@ void SPRoute::InitGrGen() {
 			if(layer.type == "ROUTING")
 				numLayers++;
 		}
+        grGen.vCap.reserve(numLayers);
+        grGen.hCap.reserve(numLayers);
 
 		grGen.grid.x = 0;
 		grGen.grid.y = 0;
@@ -1262,7 +1264,7 @@ void SPRoute::InitGrGen() {
 
 
 	    for(auto layer : lefDB.layers)
-		{
+		{   
 			if(layer.type == "ROUTING")
 			{
 				if(layer.direction == "HORIZONTAL")
@@ -1279,7 +1281,7 @@ void SPRoute::InitGrGen() {
 								}
 								else
 								{
-									grGen.hCap.push_back(0);
+									grGen.hCap.push_back(0); //metal1 cap = 0
 									grGen.vCap.push_back(0);
 								}
 							}
@@ -1294,13 +1296,13 @@ void SPRoute::InitGrGen() {
 						{
 							if(layerName == layer.name && track.direction == "X") {
 								if(grGen.vCap.size() != 0)
-								{
+								{   
 									grGen.vCap.push_back(grGen.gcellSize.x / track.step);
 									grGen.hCap.push_back(0);
 								}
 								else
 								{
-									grGen.vCap.push_back(0);
+									grGen.vCap.push_back(0); //metal1 cap = 0
 									grGen.hCap.push_back(0);
 								}
 							}
@@ -1328,19 +1330,20 @@ void SPRoute::InitGrGen() {
 
 		int cnt = 0, cnt1=0;
 		grGen.numNets = defDB.nets.size();
-
-    grGen.grnets.resize(grGen.numNets);
+        cout << "total number of nets: " << grGen.numNets << endl;
+        grGen.grnets.reserve(grGen.numNets);
+        grGen.grnets.resize(grGen.numNets);
 
 		//for(auto net : defDB.nets)   //TODO: This should be parallelized
 		//{
  
 			cout << "enters here? " << endl;
      galois::do_all(
-		 	galois::iterate((uint32_t) 0, (uint32_t)grGen.numNets),
-				[&](uint32_t idx) {
-			sproute_db::grNet tmpGRnet;
-			auto net = defDB.nets[idx];
-
+		 	galois::iterate( 0, grGen.numNets),
+				[&](int idx) {
+			sproute_db::grNet& tmpGRnet = grGen.grnets[idx];
+			sproute_db::Net& net = defDB.nets[idx];
+            
 			tmpGRnet.name = net.name;
 			tmpGRnet.idx = cnt;
 			cnt++;
@@ -1348,12 +1351,12 @@ void SPRoute::InitGrGen() {
 			if(numPins > 1000)
 				cout << "large net: " << net.name << " " << numPins << endl;
 			tmpGRnet.numPins = numPins;
+            tmpGRnet.pins.reserve(numPins);
 			for(int i = 0; i < numPins; i++)
 			{
 				int x, y, z;
 				string compName = net.componentNames.at(i);
 				string pinName = net.pinNames.at(i);
-
 
 				if(compName == "PIN") // pin is an IO pin
 				{
@@ -1372,7 +1375,7 @@ void SPRoute::InitGrGen() {
 					int compIdx = defDB.component2idx.find(compName)->second;
 					sproute_db::Component& component = defDB.components.at(compIdx);
 					bool found = false;
-					for(auto& pin : component.macro.pins)
+					for(sproute_db::Pin& pin : component.macro.pins)
 					{
 						if(pinName == pin.name)
 						{
@@ -1381,16 +1384,15 @@ void SPRoute::InitGrGen() {
 							string layerName = pin.layerRects.at(0).layerName;
 							z = lefDB.layer2idx.find(layerName)->second / 2 + 1;
 							found = true;
-
-							for(auto layerRects : pin.layerRects)
+							for(sproute_db::LayerRect& layerRect : pin.layerRects)
 							{
-							    int layerIdx = lefDB.layer2idx[layerRects.layerName];	
+							    int layerIdx = lefDB.layer2idx[layerRect.layerName];	
                                 if(lefDB.layers[layerIdx].type != "ROUTING")
                                     continue;
                                 int pinRegionz = layerIdx / 2 + 1;
                                 int trackIdx = defDB.layeridx2trackidx[layerIdx];
 								int trackStep = defDB.tracks.at(trackIdx).step;
-								for(auto rect: layerRects.rects)
+								for(sproute_db::Rect2D<float>& rect: layerRect.rects)
 								{
 									int xmin = sproute_db::find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
             						int ymin = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
@@ -1403,7 +1405,7 @@ void SPRoute::InitGrGen() {
                                     ymax = (ymax >= grGen.grid.y)? grGen.grid.y - 1: ymax;
             						//if(xmin != xmax || ymin != ymax)
             						//	cout << "Pin covers two gcells: " << net.name << " " << component.name << "/" << pin.name << endl;
-
+                                   
 									for(int pinRegionx = xmin; pinRegionx <= xmax; pinRegionx++)
 									{
 										for(int pinRegiony = ymin; pinRegiony <= ymax; pinRegiony++)
@@ -1420,21 +1422,13 @@ void SPRoute::InitGrGen() {
 				tmpGRnet.pins.push_back(grpin);
 				//cout << x << " " << y << " " << z << endl;
 			}
+            /*cout << " 9 " << idx << endl;
 			grGen.grnets[idx] = tmpGRnet;
-      //  cnt1++;
-			//grnets.push_back(tmpGRnet);
-			//netName2grnetidx.insert( pair< string, int> (tmpGRnet.name, tmpGRnet.idx));
-
-		//	tmpGRnet.pinRegion.clear();
-			//tmpGRnet.clear();
+            cout << " 10 " << endl;*/
 
 		}, galois::steal());
 
-		cout << "out here? " << endl;
 		std::cout << "numnets: " << grGen.numNets << endl;
-    cout << "cnt1: " << cnt1 << endl;
-
-
 
 }
 

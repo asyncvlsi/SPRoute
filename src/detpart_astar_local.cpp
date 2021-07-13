@@ -1,20 +1,110 @@
-#ifndef DETPART_ASTAR_H
-#define DETPART_ASTAR_H
-
-#include <vector>
-#include "galois/LargeArray.h"
-
+#include "sproute.h"
+#include "a_star.h"
+#include "detpart_astar_local.h"
 #include "setup_heap.h"
+#include "soft_cap.h"
+
+namespace sproute {
+
+bool newRipupCheck_atomic_local(TreeEdge* treeedge, int ripup_threshold, int netID,
+                          int edgeID, int* h_local_usage, int* v_local_usage){ 
+  short *gridsX, *gridsY;
+  int i, grid, ymin, xmin;
+  bool needRipup = false;
+  int break_edge = 0;
+
+  if (treeedge->len == 0) {
+    return (false);
+  } // not ripup for degraded edge
+  // std::cout << " atomic ripup" << std::endl;
+  if (treeedge->route.type == MAZEROUTE) {
+    gridsX = treeedge->route.gridsX;
+    gridsY = treeedge->route.gridsY;
+    for (i = 0; i < treeedge->route.routelen; i++) {
+        if (gridsX[i] == gridsX[i + 1]) // a vertical edge
+        {
+            ymin          = min(gridsY[i], gridsY[i + 1]);
+            grid          = ymin * xGrid + gridsX[i];
+            int old_usage = v_edges[grid].usage;
+
+            if(old_usage + v_edges[grid].red >= vCapacity - ripup_threshold) {
+            
+                break_edge = i;
+                needRipup  = true;
+                v_local_usage[grid] -= 1;
+                //v_edges[grid].usage.fetch_sub((short unsigned)1, std::memory_order_relaxed);
+            }
+            if (needRipup)
+                break;
+
+      } 
+      else if (gridsY[i] == gridsY[i + 1]) // a horizontal edge
+      {
+            xmin          = min(gridsX[i], gridsX[i + 1]);
+            grid          = gridsY[i] * (xGrid - 1) + xmin;
+            int old_usage = h_edges[grid].usage;
+
+            if(old_usage + h_edges[grid].red >= hCapacity - ripup_threshold){
+                break_edge = i;
+                needRipup  = true;
+                h_local_usage[grid] -= 1;   
+                //h_edges[grid].usage.fetch_sub((short unsigned)1, std::memory_order_relaxed);
+            }
+            if (needRipup)
+                break;
+      }
+      else {
+          cout << "ripup check error: neither horizontal or vertical" << endl;
+          exit(1);
+      }
+    }
+
+    if (needRipup) {
+      for (i = 0; i < treeedge->route.routelen; i++) {
+        if (i == break_edge)
+          continue;
+        if (gridsX[i] == gridsX[i + 1]) // a vertical edge
+        {
+            ymin = min(gridsY[i], gridsY[i + 1]);
+            //v_edges[ymin * xGrid + gridsX[i]].usage.fetch_sub(
+            //  (short unsigned)1, std::memory_order_relaxed);
+			v_local_usage[ymin * xGrid + gridsX[i]] -= 1;
+        	
+		} 
+        else /// if(gridsY[i]==gridsY[i+1])// a horizontal edge
+        {
+            xmin = min(gridsX[i], gridsX[i + 1]);
+            //h_edges[gridsY[i] * (xGrid - 1) + xmin].usage.fetch_sub(
+            //  (short unsigned)1, std::memory_order_relaxed);
+			h_local_usage[gridsY[i] * (xGrid - 1) + xmin] -= 1;
+        }
+      }
+      return (true);
+    } else {
+      return (false);
+    }
+  } else {
+    printf("route type is not maze, netID %d\n", netID);
+    fflush(stdout);
+    printEdge(netID, edgeID);
+
+    exit(1);
+  }
+}
 
 
-void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
+
+void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costHeight,
                           int ripup_threshold, int mazeedge_Threshold,
-                          Bool Ordering, int cost_type, int parts,
-                          std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done) {
+                          bool Ordering, int cost_type, int parts,
+                          std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done, 
+                          galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>& thread_local_storage) {
   // LOCK = 0;
   float forange;
-  int astar_weight = 1.0;
-  std::cout << "inside mazeRouteMSMDDetPart_Astar astar_weight: " << astar_weight << endl;
+  int astar_weight = 0.0;
+  int maze_enlarge = 20;
+  float hard_cap_penalty = 10;
+  std::cout << "inside mazeRouteMSMDDetPart_Astar_Local astar_weight: " << astar_weight << endl;
   // allocate memory for distance and parent and pop_heap
   h_costTable = (float*)calloc(40 * hCapacity, sizeof(float));
   v_costTable = (float*)calloc(40 * vCapacity, sizeof(float));
@@ -69,19 +159,17 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
   /*forange = yGrid*xGrid;
   for(int i=0; i<forange; i++)
   {
-      pop_heap2[i] = FALSE;
+      pop_heap2[i] = false;
   } //Michael*/
 
   if (Ordering) {
     StNetOrder();
   }
 
-  galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>
-      thread_local_storage{};
-  // for(nidRPC=0; nidRPC<numValidNets; nidRPC++)//parallelize
+  
+
   astar_PerThread_PQ perthread_pq;
   PerThread_Vec perthread_vec;
-  PRINT = 0;
   galois::GAccumulator<int> total_ripups;
   galois::GReduceMax<int> max_ripups;
   total_ripups.reset();
@@ -97,66 +185,44 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
   //        [&] (const auto nidRPC, auto& ctx)
 
   // decalring local h_edge and v_edges
-  Edge* h_edges_local;
-  Edge* v_edges_local;
+  std::atomic<int>* h_edges_batch_usage;
+  std::atomic<int>* v_edges_batch_usage;
 
   // galois::StatTimer roundtimer1("round");
   // roundtimer1.start();
-  h_edges_local = (Edge*)calloc(((xGrid - 1) * yGrid), sizeof(Edge));
-  v_edges_local = (Edge*)calloc((xGrid * (yGrid - 1)), sizeof(Edge));
+  h_edges_batch_usage = (std::atomic<int>*)calloc((xGrid - 1) * yGrid, sizeof(std::atomic<int>));
+  v_edges_batch_usage = (std::atomic<int>*)calloc(xGrid * (yGrid - 1), sizeof(std::atomic<int>)); //calloc is to init with 0s
 
-  // partition nets
-  std::vector<galois::InsertBag<int>> bag(parts);
-  // galois::InsertBag<int> toProcess_h_edges;
-  // galois::InsertBag<int> toProcess_v_edges;
 
-  galois::LargeArray<bool> inBag_h_edges;
-  galois::LargeArray<bool> inBag_v_edges;
-
-  inBag_h_edges.allocateBlocked((xGrid - 1) * yGrid + 1);
-  inBag_v_edges.allocateBlocked(xGrid * (yGrid - 1) + 1);
-
-  //	std::cout << "nets: " << numValidNets << std::endl;
-
-  // int factor = numValidNets/parts +1;
-  // galois::do_all(galois::iterate(0, numValidNets),
-  //[&](const auto nidRPC) {
-
-  //	for(int nidRPC = 0;nidRPC < numValidNets; nidRPC++){
-  // int idx = nidRPC%parts;
-  //			int idx = nidRPC/factor ;
-  // bag[idx].push(nidRPC);
-  //	});
-
-  galois::do_all(galois::iterate((int)0, (xGrid - 1) * yGrid), [&](int c) {
-    inBag_h_edges[c]       = false;
-    h_edges_local[c].usage = 0;
-    // h_edges_local[c].red = 0;
-    // h_edges_local[c].last_usage = 0;
+  /*galois::do_all(galois::iterate((int)0, (xGrid - 1) * yGrid), [&](int c) {
+    h_edges_batch_usage[c] = 0;
   });
 
   galois::do_all(galois::iterate((int)0, xGrid * (yGrid - 1)), [&](int c) {
-    inBag_v_edges[c]       = false;
     v_edges_local[c].usage = 0;
-    // v_edges_local[c].red = 0;
-    // v_edges_local[c].last_usage = 0;
-  });
+  });*/
 
-	galois::GAccumulator<uint32_t> count;
-    galois::GAccumulator<uint32_t> total_queue_cnt;
+  galois::GAccumulator<uint32_t> count;
+  galois::GAccumulator<uint32_t> total_queue_cnt;
+  galois::GAccumulator<uint32_t> total_dequeue_cnt;
+  galois::GAccumulator<uint32_t> astar_count;
+  galois::GAccumulator<uint32_t> maze_count;
+  galois::InsertBag<Usage_Update> usage_updates;
 
-  //	std::cout <<"size: " << (xGrid - 1) * yGrid << std::endl;
-  //	roundtimer1.stop();
   galois::StatTimer roundtimer1("round");
   roundtimer1.start();
   // std::cout << "time: " << roundtimer1.get() << std::endl;
   for (int idx = 0; idx < parts; idx++) {
+    if(vecParts[idx].size() == 0)
+      continue;
+
+    usage_updates.clear();
+    galois::runtime::profileVtune( [&] (void) {
     galois::do_all(
-        //     galois::iterate(0, numValidNets),
         galois::iterate(vecParts[idx]),
         [&](const auto nidRPC) {
-          
-		  int grid, netID;
+      
+		      int grid, netID;
 
           // maze routing for multi-source, multi-destination
           bool hypered, enter;
@@ -199,20 +265,28 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
           astar_local_pq pq1 = perthread_pq.get();
           local_vec v2 = perthread_vec.get();
 
+          int* h_local_usage = thread_local_storage.getLocal()->h_local_usage;
+          int* v_local_usage = thread_local_storage.getLocal()->v_local_usage;
+
           /*for(i=0; i<yGrid*xGrid; i++)
           {
-              pop_heap2[i] = FALSE;
+              pop_heap2[i] = false;
           } */
 
           // memset(inRegion_alloc, 0, xGrid * yGrid * sizeof(bool));
           /*for(int i=0; i<yGrid; i++)
           {
               for(int j=0; j<xGrid; j++)
-                  inRegion[i][j] = FALSE;
+                  inRegion[i][j] = false;
           }*/
-          // printf("hyperV[153][134]: %d %d %d\n", hyperV[153][134],
-          // parentY1[153][134], parentX3[153][134]); printf("what is
-          // happening?\n");
+          
+          /*for(int i = 0; i < (xGrid - 1) * yGrid; i++) {
+              h_local_usage[i] = 0;
+          }
+          
+          for(int i = 0; i < xGrid * (yGrid - 1); i++) {
+              v_local_usage[i] = 0;
+          }*/
 
           if (Ordering) {
             netID = treeOrderCong[nidRPC].treeIndex;
@@ -221,7 +295,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
           }
 
           if (done[netID])
-          	return;
+            return;
 	
           deg = sttrees[netID].deg;
 
@@ -236,24 +310,24 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
 
 			    bool flag = true;
             
-            for (int edgeID = 0; edgeID < num_edges; edgeID++) {
-          	    treeedge = &(treeedges[edgeID]);
+          for (int edgeID = 0; edgeID < num_edges; edgeID++) {
+              treeedge = &(treeedges[edgeID]);
 
-          	    flag = flag && checkIfDone(treeedge);
-            }
+              flag = flag && checkIfDone(treeedge);
+          }
 
-            if (done[netID]) {
-                cout << "this net is done, should not be here" << netID << " " << flag <<  endl;
-                exit(1);
-            }
+          if (done[netID]) {
+              cout << "this net is done, should not be here" << netID << " " << flag <<  endl;
+              exit(1);
+          }
 
-        	if (flag) {
+            if (flag) {
                 count += 1;
                 done[netID] = true;
                 return;
-        	}
+            }
 
-			for (edgeREC = 0; edgeREC < num_edges; edgeREC++) {
+		  for (edgeREC = 0; edgeREC < num_edges; edgeREC++) {
                 edgeID   = netEO[edgeREC].edgeID;
                 treeedge = &(treeedges[edgeID]);
 
@@ -273,25 +347,12 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
               // enter =
               // newRipupCheck_atomic(treeedge, ripup_threshold, netID, edgeID);
 
-              enter = newRipupCheck_atomic_deterministic(
-                  treeedge, ripup_threshold, netID, edgeID, h_edges_local,
-                  v_edges_local);
-
-              
-
+              enter = newRipupCheck_atomic_local(
+                  treeedge, ripup_threshold, netID, edgeID, h_local_usage,
+                  v_local_usage);
               // ripup the routing for the edge
               if (enter) {
-                /*pre_length = treeedge->route.routelen;
-                for(int i = 0; i < pre_length; i++)
-                {
-                    pre_gridsY[i] = treeedge->route.gridsY[i];
-                    pre_gridsX[i] = treeedge->route.gridsX[i];
-                    //printf("i %d x %d y %d\n", i, pre_gridsX[i],
-                pre_gridsY[i]);
-                }*/
-                // if(netID == 252163 && edgeID == 51)
-                //    printf("netID %d edgeID %d src %d %d dst %d %d\n", netID,
-                //    edgeID, n1x, n1y, n2x, n2y);
+                
                 bool astar_swap = false;
                 float local_astar_weight = astar_weight;
 
@@ -311,11 +372,9 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                   xmax = n1x;
                 }
 
-                int enlarge =
-                    min(origENG,
-                        (iter / 6 + 3) *
-                            treeedge->route
-                                .routelen); // michael, this was global variable
+                int enlarge;
+                enlarge = min(origENG, (iter / 6 + 3) * treeedge->route.routelen); // michael: this was global variable
+
                 regionX1 = max(0, xmin - enlarge);
                 regionX2 = min(xGrid - 1, xmax + enlarge);
                 regionY1 = max(0, ymin - enlarge);
@@ -325,21 +384,16 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                 for (i = regionY1; i <= regionY2; i++) {
                   for (j = regionX1; j <= regionX2; j++) {
                     d1[i][j] = BIG_INT;
-                    /*d2[i][j] = BIG_INT;
-                    hyperH[i][j] = FALSE;
-                    hyperV[i][j] = FALSE;*/
-                  }
-                }
-                // memset(hyperH, 0, xGrid * yGrid * sizeof(bool));
-                // memset(hyperV, 0, xGrid * yGrid * sizeof(bool));
-                for (i = regionY1; i <= regionY2; i++) {
-                  for (j = regionX1; j <= regionX2; j++) {
-                    hyperH[i][j] = FALSE;
                   }
                 }
                 for (i = regionY1; i <= regionY2; i++) {
                   for (j = regionX1; j <= regionX2; j++) {
-                    hyperV[i][j] = FALSE;
+                    hyperH[i][j] = false;
+                  }
+                }
+                for (i = regionY1; i <= regionY2; i++) {
+                  for (j = regionX1; j <= regionX2; j++) {
+                    hyperV[i][j] = false;
                   }
                 }
                 // TODO: use seperate loops
@@ -350,24 +404,25 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                 if(n1 >= deg && n2 >= deg) {//both are steiner points 
                     local_astar_weight = 0;
                     astar_swap = false;
+                    maze_count += 1;
                     setupHeap_steiner(netID, edgeID, pq1, v2, regionX1, regionX2, regionY1,
                             regionY2, d1, corrEdge, inRegion, local_astar_weight);
-                    
                 }
                 else if(n1 < deg && n2 >= deg) {// start point is a pin, end point is a steiner point
                     local_astar_weight = astar_weight;
                     astar_swap = true;
+                    astar_count += 1;
                     setupHeap_astar_swap(netID, edgeID, pq1, v2, regionX1, regionX2, regionY1,
                         regionY2, d1, corrEdge, inRegion, local_astar_weight);
                 }
                 else {
                     local_astar_weight = astar_weight;
                     astar_swap = false;
+                    astar_count += 1;
                     setupHeap_astar(netID, edgeID, pq1, v2, regionX1, regionX2, regionY1,
-                        regionY2, d1, corrEdge, inRegion, local_astar_weight);
-                    
+                        regionY2, d1, corrEdge, inRegion, local_astar_weight);  
                 }
-                
+
                 // TODO: use std priority queue
                 // while loop to find shortest path
                 ind1 = (pq1.top().d1_p - &d1[0][0]);
@@ -377,14 +432,14 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
 
                 for (local_vec::iterator ii = v2.begin(); ii != v2.end();
                      ii++) {
-                  pop_heap2[*ii] = TRUE;
+                  pop_heap2[*ii] = true;
                 }
 
                 int dst_x = v2[0] % xGrid;
                 int dst_y = v2[0] / xGrid;
                 float curr_d1;
                 while (pop_heap2[ind1] ==
-                       FALSE) // stop until the grid position been popped out
+                       false) // stop until the grid position been popped out
                               // from both heap1 and heap2
                 {
                   // relax all the adjacent grids within the enlarged region for
@@ -394,6 +449,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                   // pq1.size: %d\n", curX, curY, regionX1, regionX2, regionY1,
                   // regionY2, pq1.size()); if(curX == 102 && curY == 221)
                   // exit(1);
+                  total_dequeue_cnt += 1;
                   curr_d1 = d1[curY][curX];
                   if (curr_d1 != 0) {
                     if (HV[curY][curX]) {
@@ -415,14 +471,14 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                     if ((preY == curY) || (curr_d1 == 0)) {
                       tmp =
                           curr_d1 +
-                          h_costTable[h_edges[grid].usage + h_edges[grid].red +
+                          h_costTable[h_edges[grid].usage + h_edges[grid].red + h_local_usage[grid] + 
                                       (int)(L * h_edges[grid].last_usage)];
                     } else {
                       if (curX < regionX2 - 1) {
                         tmp_grid = curY * (xGrid - 1) + curX;
                         tmp_cost =
                             d1[curY][curX + 1] +
-                            h_costTable[h_edges[tmp_grid].usage +
+                            h_costTable[h_edges[tmp_grid].usage + h_local_usage[tmp_grid] + 
                                         h_edges[tmp_grid].red +
                                         (int)(L *
                                               h_edges[tmp_grid].last_usage)];
@@ -431,27 +487,27 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                         if (tmp_cost < curr_d1 + VIA &&
                             d1[curY][tmpX] >
                                 tmp_cost +
-                                    h_costTable[h_edges[grid].usage +
+                                    h_costTable[h_edges[grid].usage + h_local_usage[grid] + 
                                                 h_edges[grid].red +
                                                 (int)(L * h_edges[grid]
                                                               .last_usage)]) {
-                          hyperH[curY][curX] = TRUE; // Michael
+                          hyperH[curY][curX] = true; // Michael
                         }
                       }
                       tmp =
                           curr_d1 + VIA +
-                          h_costTable[h_edges[grid].usage + h_edges[grid].red +
+                          h_costTable[h_edges[grid].usage + h_edges[grid].red + h_local_usage[grid] + 
                                       (int)(L * h_edges[grid].last_usage)];
                     }
 
-                    if (d1[curY][tmpX] > tmp) // left neighbor been put into
+                    if (d1[curY][tmpX] > tmp && (OBS_NO_STOP || h_edges[grid].cap > 0)) // left neighbor been put into
                                               // heap1 but needs update
                     {
                       float dst_dist = local_astar_weight * (fabs(tmpX - dst_x) + fabs(curY - dst_y));
                       d1[curY][tmpX]       = tmp;
                       parentX3[curY][tmpX] = curX;
                       parentY3[curY][tmpX] = curY;
-                      HV[curY][tmpX]       = FALSE;
+                      HV[curY][tmpX]       = false;
                       pq1.push({&(d1[curY][tmpX]), tmp, dst_dist});
                       total_queue_cnt += 1;
                     }
@@ -464,7 +520,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                     if ((preY == curY) || (curr_d1 == 0)) {
                       tmp =
                           curr_d1 +
-                          h_costTable[h_edges[grid].usage + h_edges[grid].red +
+                          h_costTable[h_edges[grid].usage + h_edges[grid].red + h_local_usage[grid] + 
                                       (int)(L * h_edges[grid].last_usage)];
                     } 
                     else {
@@ -474,7 +530,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                         tmp_cost =
                             d1[curY][curX - 1] +
                             h_costTable
-                                [h_edges[tmp_grid].usage +
+                                [h_edges[tmp_grid].usage + h_local_usage[tmp_grid] + 
                                   h_edges[tmp_grid].red +
                                   (int)(L * h_edges[tmp_grid]
                                                 .last_usage)];
@@ -483,16 +539,16 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                             d1[curY][tmpX] >
                                 tmp_cost +
                                     h_costTable
-                                        [h_edges[grid].usage +
+                                        [h_edges[grid].usage + h_local_usage[grid] + 
                                           h_edges[grid].red +
                                           (int)(L *
                                                 h_edges[grid]
                                                     .last_usage)]) {
-                          hyperH[curY][curX] = TRUE;
+                          hyperH[curY][curX] = true;
                         }
                       }
                         tmp = curr_d1 + VIA +
-                              h_costTable[h_edges[grid].usage +
+                              h_costTable[h_edges[grid].usage + h_local_usage[grid] + 
                                           h_edges[grid].red +
                                           (int)(L *
                                                 h_edges[grid]
@@ -500,14 +556,14 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                     }
 
                     if (d1[curY][tmpX] >
-                        tmp) // right neighbor been put into
+                        tmp && (OBS_NO_STOP || h_edges[grid].cap > 0)) // right neighbor been put into
                               // heap1 but needs update
                     {
                         float dst_dist = local_astar_weight * (fabs(tmpX - dst_x) + fabs(curY - dst_y));
                       d1[curY][tmpX]       = tmp;
                       parentX3[curY][tmpX] = curX;
                       parentY3[curY][tmpX] = curY;
-                      HV[curY][tmpX]       = FALSE;
+                      HV[curY][tmpX]       = false;
                       pq1.push({&(d1[curY][tmpX]), tmp, dst_dist});
                         total_queue_cnt += 1;
                     }
@@ -520,7 +576,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                     if ((preX == curX) || (curr_d1 == 0)) {
                       tmp =
                           curr_d1 +
-                          v_costTable[v_edges[grid].usage + v_edges[grid].red +
+                          v_costTable[v_edges[grid].usage + v_edges[grid].red + v_local_usage[grid] + 
                                       (int)(L * v_edges[grid].last_usage)];
                     } 
                     else {
@@ -529,7 +585,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                         tmp_cost =
                             d1[curY + 1][curX] +
                             v_costTable
-                                [v_edges[tmp_grid].usage +
+                                [v_edges[tmp_grid].usage + v_local_usage[tmp_grid] + 
                                   v_edges[tmp_grid].red +
                                   (int)(L *
                                         v_edges[tmp_grid]
@@ -539,33 +595,32 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                               d1[tmpY][curX] >
                                   tmp_cost +
                                       v_costTable
-                                          [v_edges[grid]
-                                                .usage +
+                                          [v_edges[grid].usage + v_local_usage[grid] + 
                                             v_edges[grid].red +
                                             (int)(L *
                                                   v_edges[grid]
                                                       .last_usage)]) {
-                            hyperV[curY][curX] = TRUE;
+                            hyperV[curY][curX] = true;
                           }
                       }
                       tmp =
                           curr_d1 + VIA +
                           v_costTable
-                              [v_edges[grid].usage +
+                              [v_edges[grid].usage + v_local_usage[grid] + 
                                 v_edges[grid].red +
                                 (int)(L * v_edges[grid]
                                               .last_usage)];
                     }
 
                     if (d1[tmpY][curX] >
-                        tmp) // bottom neighbor been put
+                        tmp && (OBS_NO_STOP || v_edges[grid].cap > 0)) // bottom neighbor been put
                               // into heap1 but needs update
                     {
                         float dst_dist = local_astar_weight * (fabs(curX - dst_x) + fabs(tmpY - dst_y));
                       d1[tmpY][curX]       = tmp;
                       parentX1[tmpY][curX] = curX;
                       parentY1[tmpY][curX] = curY;
-                      HV[tmpY][curX]       = TRUE;
+                      HV[tmpY][curX]       = true;
                       pq1.push({&(d1[tmpY][curX]), tmp, dst_dist});
                       total_queue_cnt += 1;
                     }
@@ -578,7 +633,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                     if ((preX == curX) || (curr_d1 == 0)) {
                       tmp =
                           curr_d1 +
-                          v_costTable[v_edges[grid].usage + v_edges[grid].red +
+                          v_costTable[v_edges[grid].usage + v_edges[grid].red + v_local_usage[grid] + 
                                       (int)(L * v_edges[grid].last_usage)];
                     }
                     else {
@@ -588,7 +643,7 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                         tmp_cost =
                             d1[curY - 1][curX] +
                             v_costTable
-                                [v_edges[tmp_grid].usage +
+                                [v_edges[tmp_grid].usage + v_local_usage[tmp_grid] + 
                                   v_edges[tmp_grid].red +
                                   (int)(L *
                                         v_edges[tmp_grid]
@@ -598,32 +653,31 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                             d1[tmpY][curX] >
                                 tmp_cost +
                                     v_costTable
-                                        [v_edges[grid]
-                                              .usage +
+                                        [v_edges[grid].usage + v_local_usage[grid] + 
                                           v_edges[grid].red +
                                           (int)(L *
                                                 v_edges[grid]
                                                     .last_usage)]) {
-                          hyperV[curY][curX] = TRUE;
+                          hyperV[curY][curX] = true;
                         }
                       }
                       tmp =
                           curr_d1 + VIA +
                           v_costTable
-                              [v_edges[grid].usage +
+                              [v_edges[grid].usage + v_local_usage[grid] + 
                                 v_edges[grid].red +
                                 (int)(L * v_edges[grid]
                                               .last_usage)];
                     }
                     if (d1[tmpY][curX] >
-                        tmp) // top neighbor been put into
+                        tmp && (OBS_NO_STOP || v_edges[grid].cap > 0)) // top neighbor been put into
                               // heap1 but needs update
                     {
                         float dst_dist = local_astar_weight * (fabs(curX - dst_x) + fabs(tmpY - dst_y));
                       d1[tmpY][curX]       = tmp;
                       parentX1[tmpY][curX] = curX;
                       parentY1[tmpY][curX] = curY;
-                      HV[tmpY][curX]       = TRUE;
+                      HV[tmpY][curX]       = true;
                       pq1.push({&(d1[tmpY][curX]), tmp, dst_dist});
                       total_queue_cnt += 1;
                     }
@@ -636,22 +690,24 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                     if(pq1.size() <= 0) {
                         cout << "ERROR: priority queue empty! " << endl; 
                         cout << "netid: " << netID << " netName: " << nets[netID]->name << " edgeid: " << edgeID << endl;
-                        bool n1_steiner = (n1 < deg)? true: false;
-                        bool n2_steiner = (n2 < deg)? true: false;
-                        cout << n1_steiner << " " << n2_steiner << endl;
+                        bool n1_is_pin = (n1 < deg)? true: false;
+                        bool n2_is_pin = (n2 < deg)? true: false;
+                        cout << n1_is_pin << " " << n2_is_pin << endl;
                         cout << n1x << "," << n1y << " " << n2x << "," << n2y << endl;
                         exit(1);
                     }
+                    
                     ind1    = pq1.top().d1_p - &d1[0][0];
                     d1_push = pq1.top().d1_push;
                     pq1.pop();
                     curX = ind1 % xGrid;
                     curY = ind1 / xGrid;
+
                   } while (d1_push != d1[curY][curX]);
                 } // while loop
 
                 for (local_vec::iterator ii = v2.begin(); ii != v2.end(); ii++)
-                  pop_heap2[*ii] = FALSE;
+                  pop_heap2[*ii] = false;
 
                 crossX = ind1 % xGrid;
                 crossY = ind1 / xGrid;
@@ -661,16 +717,16 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
                 curY = crossY;
                 while (d1[curY][curX] != 0) // loop until reach subtree1
                 {
-                  hypered = FALSE;
+                  hypered = false;
                   if (cnt != 0) {
                     if (curX != tmpX && hyperH[curY][curX]) {
                       curX    = 2 * curX - tmpX;
-                      hypered = TRUE;
+                      hypered = true;
                     }
                     // printf("hyperV[153][134]: %d\n", hyperV[curY][curX]);
                     if (curY != tmpY && hyperV[curY][curX]) {
                       curY    = 2 * curY - tmpY;
-                      hypered = TRUE;
+                      hypered = true;
                     }
                   }
                   tmpX = curX;
@@ -984,127 +1040,98 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
 
                 // update edge usage
 
-                /*for(i=0; i<pre_length; i++)
-                {
-                    if(pre_gridsX[i]==pre_gridsX[i+1]) // a vertical edge
-                    {
-                        if(i != pre_length - 1)
-                            min_y = min(pre_gridsY[i], pre_gridsY[i+1]);
-                        else
-                            min_y = pre_gridsY[i];
-                        //v_edges[min_y*xGrid+gridsX[i]].usage += 1;
-                        //galois::atomicAdd(v_edges[min_y*xGrid+gridsX[i]].usage,
-                (short unsigned)1);
-                        //printf("x y %d %d i %d \n", pre_gridsX[i], min_y, i);
-                        v_edges[min_y*xGrid+pre_gridsX[i]].usage.fetch_sub((short
-                int)1);
-                        //if(v_edges[min_y*xGrid+pre_gridsX[i]].usage < 0)
-                printf("V negative! %d \n", i);
-                    }
-                    else ///if(gridsY[i]==gridsY[i+1])// a horizontal edge
-                    {
-                        if(i != pre_length - 1)
-                            min_x = min(pre_gridsX[i], pre_gridsX[i+1]);
-                        else
-                            min_x = pre_gridsX[i];
-                        //h_edges[gridsY[i]*(xGrid-1)+min_x].usage += 1;
-                        //galois::atomicAdd(h_edges[gridsY[i]*(xGrid-1)+min_x].usage,
-                (short unsigned)1);
-                        //printf("x y %d %d i %d\n", min_x, pre_gridsY[i], i);
-                        h_edges[pre_gridsY[i]*(xGrid-1)+min_x].usage.fetch_sub((short
-                int)1);
-                        //if(h_edges[pre_gridsY[i]*(xGrid-1)+min_x].usage < 0)
-                printf("H negative! %d \n", i);
-                    }
-                }*/
-
                 for (i = 0; i < cnt_n1n2 - 1; i++) {
                   if (gridsX[i] == gridsX[i + 1]) // a vertical edge
                   {
                     min_y = min(gridsY[i], gridsY[i + 1]);
-                    // v_edges[min_y*xGrid+gridsX[i]].usage += 1;
-                    // galois::atomicAdd(v_edges[min_y*xGrid+gridsX[i]].usage,
-                    // (short unsigned)1);
-                    // v_edges[min_y * xGrid + gridsX[i]].usage.fetch_add(
-                    //  (short int)1);
-                    v_edges_local[min_y * xGrid + gridsX[i]].usage.fetch_add(
-                        (short int)1);
-
-                    // if(!inBag_v_edges[min_y * xGrid + gridsX[i]]){
-
-                    // toProcess_v_edges.push(min_y * xGrid + gridsX[i]);
-                    //				inBag_v_edges[min_y * xGrid + gridsX[i]] =
-                    // true;
-                    //	}
-                  } else /// if(gridsY[i]==gridsY[i+1])// a horizontal edge
+                    v_local_usage[min_y * xGrid + gridsX[i]] += 1;
+                  } 
+                  else /// if(gridsY[i]==gridsY[i+1])// a horizontal edge
                   {
                     min_x = min(gridsX[i], gridsX[i + 1]);
-                    // h_edges[gridsY[i]*(xGrid-1)+min_x].usage += 1;
-                    // galois::atomicAdd(h_edges[gridsY[i]*(xGrid-1)+min_x].usage,
-                    // (short unsigned)1);
-                    // h_edges[gridsY[i] * (xGrid - 1) + min_x].usage.fetch_add(
-                    //  (short int)1);
-                    h_edges_local[gridsY[i] * (xGrid - 1) + min_x]
-                        .usage.fetch_add((short int)1);
-
-                    // if(!inBag_h_edges[gridsY[i] * (xGrid - 1) + min_x]){
-
-                    // toProcess_h_edges.push(gridsY[i] * (xGrid - 1) + min_x);
-                    //					inBag_h_edges[gridsY[i] * (xGrid - 1) + min_x]
-                    //= true;
-                    //}
+                    h_local_usage[gridsY[i] * (xGrid - 1) + min_x] += 1;
                   }
                 }
-                /*if(LOCK){
-                    for(i=0; i<cnt_n1n2-1; i++)
-                    {
-                        if(gridsX[i]==gridsX[i+1]) // a vertical edge
-                        {
-                            min_y = min(gridsY[i], gridsY[i+1]);
-                            v_edges[min_y*xGrid+gridsX[i]].releaseLock();
-                        }
-                        else ///if(gridsY[i]==gridsY[i+1])// a horizontal edge
-                        {
-                            min_x = min(gridsX[i], gridsX[i+1]);
-                            h_edges[gridsY[i]*(xGrid-1)+min_x].releaseLock();
-                        }
-                    }
-                }*/
+
+                //cout << "working on netID: " << netID << endl;
+
                 if (checkRoute2DTree(netID)) {
+                  for(int i = 0; i < (xGrid - 1) * yGrid; i++) {
+                    if(h_local_usage[i] != 0) {
+                      //h_edges_batch_usage[i].fetch_add(h_local_usage[i], std::memory_order_relaxed);       
+                      usage_updates.emplace_back(i, true, h_local_usage[i]);
+                      h_local_usage[i] = 0;         
+                    }
+                  }
+                  for(int i = 0; i < xGrid * (yGrid - 1); i++) {
+                    if(v_local_usage[i] != 0) {
+                      usage_updates.emplace_back(i, false, v_local_usage[i]);
+                      //v_edges_batch_usage[i].fetch_add(v_local_usage[i], std::memory_order_relaxed);
+                      v_local_usage[i] = 0;
+                    }
+                  }
                   reInitTree(netID);
                   return;
                 }
-              } // congested route
-            }   // maze routing
+              } // congested route. if(enter)
+            }   // maze routing, if len > threshold
           }     // loop edgeID
+
+          for(int i = 0; i < (xGrid - 1) * yGrid; i++) {
+            if(h_local_usage[i] != 0) {
+              //h_edges_batch_usage[i].fetch_add(h_local_usage[i], std::memory_order_relaxed);       
+              usage_updates.emplace_back(i, true, h_local_usage[i]);
+              h_local_usage[i] = 0;         
+            }
+          }
+          for(int i = 0; i < xGrid * (yGrid - 1); i++) {
+            if(v_local_usage[i] != 0) {
+              usage_updates.emplace_back(i, false, v_local_usage[i]);
+              //v_edges_batch_usage[i].fetch_add(v_local_usage[i], std::memory_order_relaxed);
+              v_local_usage[i] = 0;
+            }
+          }
+        
         },
         // galois::wl<galois::worklists::ParaMeter<>>(),
         galois::steal(),
-        // galois::chunk_size<64>(),
+        galois::chunk_size<1>(),
         galois::loopname("net-level parallelism")); // galois::do_all
 
+        }, "do-all vtune");
+    
     //	galois::StatTimer roundtimer1("round");
     // roundtimer1.start();
     
 
     // update h_edges
 
-    galois::do_all(galois::iterate((int)0, (xGrid - 1) * yGrid), [&](int c) {
-      h_edges[c].usage += h_edges_local[c].usage;
-      h_edges_local[c].usage = 0;
-
-      
+    /*galois::do_all(galois::iterate((int)0, (xGrid - 1) * yGrid), [&](int c) {
+      if(h_edges_batch_usage[c] != 0) {
+        h_edges[c].usage += h_edges_batch_usage[c];
+        h_edges_batch_usage[c] = 0;
+      }
     });
 
     // update v_edges
     galois::do_all(galois::iterate((int)0, xGrid * (yGrid - 1)), [&](int c) {
-      v_edges[c].usage += v_edges_local[c].usage;
-      v_edges_local[c].usage = 0;
+      if(v_edges_batch_usage[c] != 0) {
+        v_edges[c].usage += v_edges_batch_usage[c];
+        v_edges_batch_usage[c] = 0;
+      }
+    });*/
 
+    galois::do_all(galois::iterate(usage_updates), [&](Usage_Update& usage_update) {
+      if(usage_update.is_H) {
+        h_edges[usage_update.grid].usage.fetch_add(usage_update.delta);
+      }
+      else {
+        v_edges[usage_update.grid].usage.fetch_add(usage_update.delta);
+      }
     });
 
 
-  } // end for
+  } // end for parts
 
   roundtimer1.stop();
   printf("rtimer: %d\n", roundtimer1.get());
@@ -1115,24 +1142,17 @@ void mazeRouteMSMDDetPart_Astar(int iter, int expand, float costHeight,
   free(h_costTable);
   free(v_costTable);
 
-  free(h_edges_local);
-  free(v_edges_local);
+  free(h_edges_batch_usage);
+  free(v_edges_batch_usage);
 
-  inBag_h_edges.destroy();
-  inBag_h_edges.deallocate();
     acc_count += count.reduce();
 
 	std::cout <<" count: " << count.reduce() << " acc_count: " << acc_count << " remaining: " << numValidNets - acc_count << std::endl;
-    std::cout << "total queue cnt: " << total_queue_cnt.reduce() << endl;
-
-  inBag_v_edges.destroy();
-  inBag_v_edges.deallocate();
+  std::cout <<" astar ripups: " << astar_count.reduce() << " maze ripup: " << maze_count.reduce() << endl;
+    std::cout << "total queue cnt: " << total_queue_cnt.reduce() << " total dequeue cnt: " << total_dequeue_cnt.reduce() << endl;
 
   //checkOverflowRemaining(done);
 
 }
 
-
-
-
-#endif
+} //namespace sproute

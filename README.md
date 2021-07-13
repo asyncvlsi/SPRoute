@@ -8,8 +8,9 @@
 * Boost, version >= 1.61.0
 * Si2 LEF/DEF parser: [LEF parser](https://github.com/The-OpenROAD-Project/lef) and [DEF parser](https://github.com/The-OpenROAD-Project/def). Use `cmake .. -DCMAKE_INSTALL_PREFIX=path/to/install` to specify the installation destination for each parser, and export the path as environment variable `LEF_ROOT` and `DEF_ROOT`. This LEF/DEF parser requires BISON (>= 3.0.4)
 * [ACT](https://github.com/asyncvlsi/act): environment variable `ACT_HOME` determines the installation destination of this package
-* [PhyDB]: phydb should be installed in 'ACT_HOME': 'ACT_HOME/include' should contain a 'phydb' folder with all phydb headers, 'ACT_HOME/lib' should contain libphydb.a
-* [Galois]: https://github.com/IntelligentSoftwareSystems/Galois
+* PhyDB: phydb should be installed in 'ACT_HOME': 'ACT_HOME/include' should contain a 'phydb' folder with all phydb headers, 'ACT_HOME/lib' should contain libphydb.a
+* Galois: https://github.com/IntelligentSoftwareSystems/Galois, should be installed in ACT_HOME
+* POWV.dat and POST.dat: from FLUTE (http://home.eng.iastate.edu/~cnchu/flute.html), shoule be in the working directory
 
 ### Required Evironment variable
 * 'LEF_ROOT': installation path of the Si2 lef parser

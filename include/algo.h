@@ -40,7 +40,7 @@ static Algo StrToAlgo(string algo_str) {
         return DetPart_Astar_RUDY;
     else if(algo_str == "DRC_MAP")
         return DRC_MAP;
-    else if(algo_str == "DetPart_Astar_Local")
+    else if(algo_str == "DetPart_Astar_Local" || algo_str == "Det")
         return DetPart_Astar_Local;
     else {
         std::cout << "unknown algorithm: " << algo_str << std::endl;

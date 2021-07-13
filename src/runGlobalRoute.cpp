@@ -836,22 +836,22 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 						
 						std::vector<std::vector<int>> vecParts;
 						//vecParts.resize(counted_num_part)
-						if(past_cong > 20000 && max_nets_per_part>= 32)
+						if(past_cong > 20000 && max_nets_per_part>= 16)
 							max_nets_per_part /= 2;
 						
 						rudytimer.start();
 						vecParts.resize(counted_num_part);
-						/*for (int netID = 0; netID < numValidNets; netID ++) {
+						for (int netID = 0; netID < numValidNets; netID ++) {
 							if(!done[netID]) {
 								vecParts[netID % counted_num_part].push_back(netID);
 							}
 						}
 						for(int batchID = 0; batchID < vecParts.size(); batchID++) {
 							cout << vecParts[batchID].size() << " ";
-						}*/
+						}
 						cout << endl;
 						rudytimer.stop();
-						for (int netID = 0; netID < numValidNets; netID ++) {
+						/*for (int netID = 0; netID < numValidNets; netID ++) {
 							if(!done[netID]) {
 								if(part.size() < nets_per_part) {
 									part.push_back(netID);
@@ -862,7 +862,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 									part.push_back(netID);
 								}
 							}
-						}
+						}*/
 
 						/*else {
 							rudytimer.start();
@@ -874,10 +874,10 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 							vecParts.push_back(part);
 						std::cout << "parts: " << vecParts.size() << std::endl;
 					
-						/*mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
+						mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
 											mazeedge_Threshold, false, cost_type, vecParts.size(),
 											vecParts, done, thread_local_storage);
-						*/
+						
                         break;
 					}
 					
@@ -1103,7 +1103,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 		numVia= threeDVIA ();
 		checkRoute3D();
 		//printUndone(done);
-		
+		WriteGuideToPhydb();
 		/*if (needOUTPUT) {
 			string overflowFile = "overflow.guide";
 			writeOverflow(overflowFile, grGen);
@@ -1148,7 +1148,31 @@ void SPRoute::WriteRoutedGrid(FILE* fp, std::set<sproute_db::Point3D<int>>& rout
 	}
 }
 
-void SPRoute::WriteRoute3D(char routingfile3D[])
+void SPRoute::WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Point3D<int>>& routedGrid)
+{
+	auto design_p = db_ptr_->GetDesignPtr();
+	for(auto p : routedGrid)
+	{
+		int llx  = defDB.xGcellBoundaries.at(p.x);		
+		int lly = defDB.yGcellBoundaries.at(p.y);
+		int urx = defDB.xGcellBoundaries.at(p.x + 1);
+		int ury  = defDB.yGcellBoundaries.at(p.y + 1);
+		int layer = p.z;
+
+		if(layer * 2 < lefDB.layers.size())
+		{
+			string layerName = lefDB.layers.at(layer * 2).name;
+			design_p->InsertRoutingGuide(netID, llx, lly, urx, ury, layer * 2);
+			//fprintf(fp, "%d %d %d %d %s\n", llx, lly, urx, ury, layerName.c_str());
+		}
+		else {
+			cout << "Error in writing guide: exceeds top layer! " << endl;
+			exit(1);
+		}
+	}
+}
+
+void SPRoute::WriteGuideToFile(string guideFileName)
 {
 	short *gridsX, *gridsY, *gridsL;
 	int netID, d, i,k, edgeID,nodeID,deg, lastX, lastY,lastL, xreal, yreal,l, routeLen;
@@ -1158,9 +1182,9 @@ void SPRoute::WriteRoute3D(char routingfile3D[])
 	TreeEdge edge;
 	using Point3D = sproute_db::Point3D<int>;
 	
-	fp=fopen(routingfile3D, "w");
+	fp=fopen(guideFileName.c_str(), "w");
     if (fp == NULL) {
-        printf("Error in opening %s\n", routingfile3D);
+        printf("Error in opening %s\n", guideFileName.c_str());
         exit(1);
     }
 
@@ -1340,6 +1364,131 @@ void SPRoute::WriteOverflow(string overflowFile)
 	fclose(fp);
 }
 
+void SPRoute::WriteGuideToPhydb() {
+	short *gridsX, *gridsY, *gridsL;
+	int netID, d, i,k, edgeID,nodeID,deg, lastX, lastY,lastL, xreal, yreal,l, routeLen;
+	TreeEdge *treeedges, *treeedge;
+	FILE *fp;
+	TreeNode *nodes;
+	TreeEdge edge;
+	using Point3D = sproute_db::Point3D<int>;
 
+	for(netID=0;netID<numValidNets;netID++)
+	{
+		string netName(nets[netID]->name);
+		bool print = false;
+        treeedges=sttrees[netID].edges;
+		deg=sttrees[netID].deg;
+		
+		nodes = sttrees[netID].nodes;
+
+		int grNetID = defDB.netName2netidx.find(nets[netID]->name)->second; 
+		auto grNet = grGen.grnets.at(grNetID);
+
+		std::set<Point3D> routedGrid;
+
+		for(auto p : grNet.pinRegion)
+		{
+			int botL = p.z - 1;
+			int topL = botL + 2;
+            if(netName == "Reset") {
+                cout << p.x << " " << p.y << " " << p.z << endl;
+            }
+			for (int layer = botL; layer <= topL; layer++) //this is not good, assuming all pins are on botL layer.
+			{
+				assert(p.x < xGrid && p.y < yGrid);
+				if(layer < numLayers)
+                	routedGrid.insert(Point3D(p.x, p.y, layer));
+            }
+		}
+
+		for(int i = 0; i < deg; i++)
+		{	
+			if(nodes[i].botL == 0)
+				nodes[i].topL = (nodes[i].topL >= 2)? nodes[i].topL : 2;
+
+			for (int layer = nodes[i].botL; layer <= nodes[i].topL; layer++) //this is not good, assuming all pins are on botL layer.
+			{
+				assert(nodes[i].x < xGrid && nodes[i].y < yGrid);
+				if(layer < numLayers)
+					routedGrid.insert(Point3D(nodes[i].x, nodes[i].y, layer));
+			}
+		}
+
+		for(edgeID = 0 ; edgeID < 2*deg-3; edgeID++)
+		{
+			edge = sttrees[netID].edges[edgeID];
+			treeedge = &(treeedges[edgeID]);
+			if (treeedge->len > 0) {
+				
+				routeLen = treeedge->route.routelen;
+				gridsX = treeedge->route.gridsX;
+				gridsY = treeedge->route.gridsY;
+				gridsL = treeedge->route.gridsL;
+
+				if(print)
+				{
+					cout << "routelen: " << routeLen << endl;
+				}
+
+				string direction;
+				bool output = false;
+				int start, end;
+				for(int output_cnt = 0; output_cnt < 1; output_cnt++)
+				{
+					for (i = 0; i <= routeLen; i ++) {
+						routedGrid.insert(Point3D(gridsX[i], gridsY[i], gridsL[i]));
+						if(i % 5 == 3) {
+							if(gridsL[i] <= numLayers - 2) {
+								routedGrid.insert(Point3D(gridsX[i], gridsY[i], gridsL[i] + 1));
+								//cout << "add top" << endl;
+							}
+							else if(gridsL[i] >= 2) {//metal5 adding a metal4 
+								routedGrid.insert(Point3D(gridsX[i], gridsY[i], gridsL[i] - 1));
+							}
+						}
+					}
+				}
+			}
+		}
+		int lef_netID = defDB.netName2netidx[netName];
+		WriteRoutedGridToPhydb(lef_netID, routedGrid);
+	}
+
+	for(netID=0;netID<numInvalidNets;netID++)
+	{
+		string netName(invalid_nets[netID]->name);
+		bool print = false;
+
+		if(defDB.netName2netidx.count(netName) == 0)
+		{
+			cout << "Error: unable to find net: " << netName << endl;
+			exit(1);
+		}
+		int grNetID = defDB.netName2netidx.find(netName)->second; 
+		auto grNet = grGen.grnets.at(grNetID);
+
+		std::set<Point3D> routedGrid;
+
+		for(auto p : grNet.pinRegion)
+		{
+			int botL = p.z - 1;
+			int topL = botL + 2;
+
+			for (int layer = botL; layer <= topL; layer++) //this is not good, assuming all pins are on botL layer.
+			{
+				if(layer * 2 < lefDB.layers.size())
+				{
+					routedGrid.insert(Point3D(p.x, p.y, layer));
+				}
+			}
+		}
+		int lef_netID = defDB.netName2netidx[netName];
+		WriteRoutedGridToPhydb(lef_netID, routedGrid);
+	}
 
 }
+
+
+
+} //namespace sproute

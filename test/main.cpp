@@ -43,17 +43,14 @@ int main(int argc, char** argv)
 
     //preprocessSpacingTable();
     galois::SharedMemSys G;
-    galois::preAlloc(numThreads * 2);
-
-    numThreads = galois::setActiveThreads(numThreads);
 
     phydb::PhyDB db;
     db.ReadLef(lefFileName);
     db.ReadDef(defFileName);
     cout << "reading lef/def done" << endl;
 
-    sproute::SPRoute sproute;
-    sproute.numThreads = numThreads;
+    sproute::SPRoute sproute(&db, 1, "NonDet");
+    /*sproute.numThreads = numThreads;
     sproute.LoadPhyDB(&db);
     sproute.LinkTrackToLayer();
     sproute.PreprocessSpacingTable(); 
@@ -71,8 +68,13 @@ int main(int argc, char** argv)
     sproute.algo = sproute::StrToAlgo(algo_str);
     cout << "running algorithm: " << algo_str << endl;
     
-    sproute.RunGlobalRoute(outFileName, 30, sproute.algo);
+    sproute.RunGlobalRoute(outFileName, 30, sproute.algo);*/
 
+    sproute.Run();
+
+    //sproute.WriteGuideToFile("integration_correct.guide");
+
+    db.WriteGuide("integration_test.guide");
 
     return 0;
 }

@@ -424,21 +424,6 @@ enum defKeyword {
     END
 };
 
-defKeyword token2defKeyword(string );
-void semicolonCheck(stringstream& );
-
-int getDefString(defrCallbackType_e , const char* , defiUserData );
-int getDefVoid(defrCallbackType_e , void* , defiUserData );
-int getDefDieArea(defrCallbackType_e , defiBox* , defiUserData );
-int getDefUnits(defrCallbackType_e , double , defiUserData );
-int getDefTracks(defrCallbackType_e , defiTrack* , defiUserData );
-int getDefComponents(defrCallbackType_e , defiComponent* , defiUserData );
-int getDefIOPins(defrCallbackType_e , defiPin* , defiUserData );
-int getDefNets(defrCallbackType_e , defiNet* , defiUserData );
-int getDefSNets(defrCallbackType_e , defiNet* , defiUserData );
-int getDefVias(defrCallbackType_e , defiVia* , defiUserData );
-int getDefGcell(defrCallbackType_e , defiGcellGrid* , defiUserData );
-
 int find_Gcell(int pin_in, std::vector<int> GcellBoundaries);
 
 
