@@ -16,7 +16,6 @@
 * 'LEF_ROOT': installation path of the Si2 lef parser
 * 'DEF_ROOT': installation path of the Si2 def parser
 * 'ACT_HOME': installation path of ACT, where PhyDB is installed as well 
-* 'GALOIS_INCLUDE', 'GALOIS_LIB': path of Galois header files and the Galois library libgalois_shmem.a 
 
 ### Clone, compile, and install
     $ git clone https://github.com/asyncvlsi/SPRoute.git
