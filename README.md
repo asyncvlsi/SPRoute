@@ -15,11 +15,11 @@
 ### Required Evironment variable
 * 'LEF_ROOT': installation path of the Si2 lef parser
 * 'DEF_ROOT': installation path of the Si2 def parser
-* 'ACT_HOME': installation path of ACT, where PhyDB is installed as well 
+* 'ACT_HOME': installation path of ACT, where PhyDB and Galois is installed as well 
 
 ### Clone, compile, and install
     $ git clone https://github.com/asyncvlsi/SPRoute.git
-    $ cd PWRoute/
+    $ cd SPRoute/
     $ mkdir build
     $ cd build
     $ cmake ..
