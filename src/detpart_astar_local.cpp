@@ -1134,7 +1134,7 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
   } // end for parts
 
   roundtimer1.stop();
-  printf("rtimer: %d\n", roundtimer1.get());
+  printf("rtimer: %d\n", (int)roundtimer1.get());
 
   printf("total ripups: %d max ripups: %d\n", total_ripups.reduce(),
          max_ripups.reduce());

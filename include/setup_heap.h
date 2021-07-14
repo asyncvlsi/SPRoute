@@ -1,5 +1,5 @@
 #ifndef SETUP_HEAP_H
-#define SETUP_HEAP
+#define SETUP_HEAP_H
 
 #include <vector>
 #include "galois/LargeArray.h"

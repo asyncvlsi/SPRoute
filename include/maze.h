@@ -38,9 +38,9 @@ namespace sproute {
 
 #define NET_PARALLEL 0
 
-typedef struct {
+struct maze_greater {
   bool operator()(float* left, float* right) { return (*left) > (*right); }
-} maze_greater;
+};
 
 class pq_grid {
 public:
@@ -80,11 +80,11 @@ public:
   }
 };
 
-typedef struct {
+struct pq_less {
   bool operator()(const pq_grid& left, const pq_grid& right) const {
     return left.d1_push < right.d1_push;
   }
-} pq_less;
+};
 
 /*typedef galois::PerThreadDeque< float* > PerThread_PQ;
 typedef galois::gstl::Deque< float* > local_pq;*/ //FIFO TRIAL
@@ -103,6 +103,8 @@ typedef struct {
 #define FIFO_CHUNK_SIZE 4
 #define OBIM_delta 20
 
+namespace {
+
 auto RequestIndexer = [](const pq_grid& top) {
   return (unsigned int)(top.d1_push) /
          max(OBIM_delta, (int)(costheight / (2 * slope)));
@@ -111,6 +113,8 @@ auto RequestIndexer = [](const pq_grid& top) {
 auto RequestIndexerLate = [](const lateUpdateReq& top) {
   return (unsigned int)(top.d1_push) / OBIM_delta;
 };
+
+}
 
 bool checkIfDone(TreeEdge* treeedge);
 /*auto RequestIndexerConcurrent = [&](const concurrent_pq_grid& top) {

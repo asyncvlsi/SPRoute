@@ -22,11 +22,11 @@ public:
   }
 };
 
-typedef struct {
+struct astar_pq_less {
   bool operator()(const astar_pq_grid& left, const astar_pq_grid& right) const {
     return left.d1_push + left.target_dist_push < right.d1_push + right.target_dist_push;
   }
-} astar_pq_less;
+};
 
 typedef galois::PerThreadMinHeap<astar_pq_grid, astar_pq_less> astar_PerThread_PQ;
 typedef galois::gstl::PQ<astar_pq_grid, astar_pq_less> astar_local_pq;
