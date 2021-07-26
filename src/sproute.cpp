@@ -335,8 +335,8 @@ void SPRoute::LoadPhyDBSNets() {
             tmpPath.rect.set(phydb_path.GetRect().LLX(), phydb_path.GetRect().LLX(), phydb_path.GetRect().LLX(), phydb_path.GetRect().LLX());
             tmpPath.begin.x = phydb_path.GetBegin().x;
             tmpPath.begin.y = phydb_path.GetBegin().y;
-            tmpPath.begin.x = phydb_path.GetBegin().x;
-            tmpPath.begin.y = phydb_path.GetBegin().y;
+            tmpPath.end.x = phydb_path.GetEnd().x;
+            tmpPath.end.y = phydb_path.GetEnd().y;
 
             tmpSNet.paths.push_back(tmpPath);
         }
