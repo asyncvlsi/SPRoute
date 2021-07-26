@@ -543,7 +543,15 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 		ReadGR(grGen, algo);
 
 		printf("\nReading Lookup Table ...\n");
-		readLUT();
+                if (getenv ("ACT_HOME") == NULL) {
+  		   readLUT();
+                }
+                else {
+	           char *lpath = (char *)malloc (strlen (getenv ("ACT_HOME")) + 6);
+		   sprintf (lpath, "%s/lib/", getenv ("ACT_HOME"));
+		   readLUT (lpath);
+                   free (lpath);
+                }
 		printf("\nDone reading table\n\n");  
 
 		
