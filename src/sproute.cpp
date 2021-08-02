@@ -255,7 +255,7 @@ void SPRoute::LoadPhyDBComponents() {
 
         tmpComponent.idx = idx;
         tmpComponent.name = phydb_component.GetName();
-        tmpComponent.macroName = phydb_component.GetMacroName();
+        tmpComponent.macroName = phydb_component.GetMacro()->GetName();
         tmpComponent.locationType = phydb::PlaceStatusStr(phydb_component.GetPlacementStatus());
         tmpComponent.orient = phydb::CompOrientStr(phydb_component.GetOrientation());
         tmpComponent.location.x = phydb_component.GetLocation().x;
