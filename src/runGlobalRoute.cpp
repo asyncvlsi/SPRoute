@@ -116,25 +116,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 
                 pinX = sproute_db::find_Gcell(pinX_in, defDB.xGcellBoundaries);
                 pinY = sproute_db::find_Gcell(pinY_in, defDB.yGcellBoundaries);
-                
-
-                
-                /*int tmp_pinX = (int)((pinX_in-xcorner)/wTile);
-                int tmp_pinY = (int)((pinY_in-ycorner)/hTile);
-                if(pinX != tmp_pinX || pinY != tmp_pinY)
-                {
-                	cout << pinX_in << " " << pinY_in << endl;
-                	cout << pinX << " " << pinY << endl;
-                	cout << tmp_pinX << " " << tmp_pinY << endl;
-                	cout << xcorner << " " << ycorner << " " << wTile << " " << hTile << endl;
-                	exit(1);
-                }*/
-                if(strcmp(netName, "Reset") == 0 && pinX == 67 && pinY == 0)
-                {
-                    cout << "reading Reset:" << endl;
-                    cout << "pinX: " << pinX << " pinY: " << pinY << " pinL: " << pinL << " numLayers: " << numLayers << endl;
-                }
-
+            
                 if(!(pinX < 0 || pinX > xGrid || pinY < -1 || pinY > yGrid|| pinL > numLayers || pinL<=0))
                 {
                     
@@ -1216,9 +1198,6 @@ void SPRoute::WriteGuideToFile(string guideFileName)
 		{
 			int botL = p.z - 1;
 			int topL = botL + 2;
-            if(netName == "Reset") {
-                cout << p.x << " " << p.y << " " << p.z << endl;
-            }
 			for (int layer = botL; layer <= topL; layer++) //this is not good, assuming all pins are on botL layer.
 			{
 				assert(p.x < xGrid && p.y < yGrid);
@@ -1399,9 +1378,7 @@ void SPRoute::WriteGuideToPhydb() {
 		{
 			int botL = p.z - 1;
 			int topL = botL + 2;
-            if(netName == "Reset") {
-                cout << p.x << " " << p.y << " " << p.z << endl;
-            }
+            
 			for (int layer = botL; layer <= topL; layer++) //this is not good, assuming all pins are on botL layer.
 			{
 				assert(p.x < xGrid && p.y < yGrid);

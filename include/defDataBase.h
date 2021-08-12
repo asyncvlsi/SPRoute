@@ -283,8 +283,7 @@ enum GcellState{
 class Gcell
 {
 public: 
-    bool* trackUsed;
-    bool* pointUsed;
+    bool trackUsed[15];
     int numPoints;
     int numNodeOffset;
     int numTracks;
@@ -296,8 +295,6 @@ public:
         obs_state = NO_OBS;
         numPoints = 0;
         numTracks = 0;
-        trackUsed = NULL;
-        pointUsed = NULL;
         OBSIDlist.reserve(16);
     }
 

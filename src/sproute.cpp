@@ -1124,15 +1124,6 @@ void SPRoute::GcellInsertOBS(int x, int y, int z, sproute_db::Rect2D<int> rect, 
     int trackStart = track.start;
     int trackStep = track.step;
 
-    if(debug && x == 10 && y == 189 && z == 1) {
-        cout << "10, 189, 1 (metal2) : " << endl;
-        sproute_db::Rect2D<float> tmpRect;
-        tmpRect.lowerLeft.x = (float)rect.lowerLeft.x / 2000.0;
-        tmpRect.lowerLeft.y = (float)rect.lowerLeft.y / 2000.0;
-        tmpRect.upperRight.x = (float)rect.upperRight.x / 2000.0;
-        tmpRect.upperRight.y = (float)rect.upperRight.y / 2000.0;
-        cout << tmpRect << endl;
-    }
 
     int gcellTrackStart = (gcellLower - trackStart) / trackStep + 1; // both are inclusive, i.e. local 0-14
     int gcellTrackEnd = (gcellUpper - trackStart) / trackStep;
@@ -1140,15 +1131,17 @@ void SPRoute::GcellInsertOBS(int x, int y, int z, sproute_db::Rect2D<int> rect, 
     sproute_db::Range<int> gcellRange(gcellTrackStart, gcellTrackEnd);
 
 
-    if(gcell.trackUsed == NULL)
+    if(gcell.numTracks == 0)
     {
         gcell.numTracks = gcellTrackEnd - gcellTrackStart + 1;
-        gcell.trackUsed = new bool [gcell.numTracks];
+        if(gcell.numTracks > 15) {
+            cout << "numtracks more than 15? " << gcell.numTracks << endl;
+            exit(1);
+        }
         for(int i = 0; i < gcell.numTracks; i++)
         {
             gcell.trackUsed[i] = false;
         }
-
     }
 
     int std_width = lefDB.layers.at(z*2).width * defDB.dbuPerMicro;
@@ -1156,19 +1149,13 @@ void SPRoute::GcellInsertOBS(int x, int y, int z, sproute_db::Rect2D<int> rect, 
 
     bool expand = (rect_width == std_width)? false : true;
 
-    if(debug && x == 10 && y == 189 && z == 1) {
-        cout << "expand: " << expand << endl;
-    }
-
     sproute_db::Range<int> OBSTrackRange = GetTrackRange(z*2, rect, expand);
-
     sproute_db::Range<int> overlapRange = RangeIntersection(gcellRange, OBSTrackRange);
+    if(overlapRange.start == 0 && overlapRange.end == 0)
+        return;
     int localStart = overlapRange.start - gcellTrackStart;
     int localEnd = overlapRange.end - gcellTrackStart;
 
-    if(debug && x == 10 && y == 189 && z == 1) {
-        cout << "localStart: " << localStart << " localEnd: " << localEnd << endl;
-    }
 
     for(int i = localStart; i <= localEnd; i++)
     {
