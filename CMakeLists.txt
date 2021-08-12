@@ -157,7 +157,8 @@ message(STATUS "Current installation directory: " ${CMAKE_INSTALL_PREFIX})
 install(DIRECTORY include/ DESTINATION include/sproute COMPONENT Development FILES_MATCHING PATTERN "*.h")
 
 ######################################
-# Install library
+# Install library and FLUTE's files
 ######################################
-install(TARGETS sproute
+install(DIRECTORY lib/
     DESTINATION lib)
+
