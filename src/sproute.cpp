@@ -1005,8 +1005,16 @@ void SPRoute::AdjustGcellCap()
                     tmpCapReduction.x = x;
                     tmpCapReduction.y = y;
                     tmpCapReduction.z = i / 2;
-                    tmpCapReduction.newCap = gcell.numTracks - numUsedTrack;
-                    assert(tmpCapReduction.newCap >= 0);
+                    if(gcell.obs_state == sproute_db::NO_OBS)
+                        tmpCapReduction.newCap = nextGcell.numTracks - numUsedTrack;
+                    else
+                        tmpCapReduction.newCap = gcell.numTracks - numUsedTrack;
+                    if(tmpCapReduction.newCap < 0) {
+                        cout << " cap adjust < 0, error! " << gcell.numTracks << " " << numUsedTrack << " x : " << x << " y: " << y << " z: " << i / 2 <<  endl;
+                        cout << defDB.xGcellBoundaries.size() - 2 << " " << defDB.yGcellBoundaries.size() - 2 << endl;
+                        exit(1);
+                    }
+                    //assert(tmpCapReduction.newCap >= 0);
 
                     capReductions.push(tmpCapReduction);
                 }
