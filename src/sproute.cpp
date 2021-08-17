@@ -917,10 +917,22 @@ void SPRoute::PreprocessDesignRule()
                 int expand = std::max(PRL_expand, EOL_expand);
                 expand = std::max(expand, COR_expand);
                 sproute_db::Rect2D<int> expandRect;
-                expandRect.lowerLeft.x = rect.lowerLeft.x - expand;
-                expandRect.lowerLeft.y = rect.lowerLeft.y - expand;
-                expandRect.upperRight.x = rect.upperRight.x + expand;
-                expandRect.upperRight.y = rect.upperRight.y + expand;
+                if(lefDB.layers.at(i).direction == "HORIZONTAL") {
+                    expandRect.lowerLeft.x = rect.lowerLeft.x;
+                    expandRect.upperRight.x = rect.upperRight.x;
+                    expandRect.lowerLeft.y = rect.lowerLeft.y - expand;
+                    expandRect.upperRight.y = rect.upperRight.y + expand;
+                }
+                else if(lefDB.layers.at(i).direction == "VERTICAL") {
+                    expandRect.lowerLeft.x = rect.lowerLeft.x - expand;
+                    expandRect.upperRight.x = rect.upperRight.x + expand;
+                    expandRect.lowerLeft.y = rect.lowerLeft.y;
+                    expandRect.upperRight.y = rect.upperRight.y;
+                }
+                else {
+                    cout << "unknown layer direction: " << lefDB.layers.at(i).direction << endl;
+                    exit(1);
+                }
                 defDB.designRuleOBS.at(i).push_back(expandRect);
             }
             else { //standard width wire
@@ -1050,14 +1062,22 @@ void SPRoute::PreprocessDesignRuleOBS()
             int xGcell_end = 0;
             int yGcell_end = 0;
 
-            xGcell_start = sproute_db::find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
-            yGcell_start = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
-            xGcell_end = sproute_db::find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
-            yGcell_end = sproute_db::find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
-
-            //cout << xGcell_start << " " << yGcell_start << " " << xGcell_end << " " << yGcell_end << endl;
-
-            //cout << " ========== " << endl;
+            if(lefDB.layers.at(i).direction == "HORIZONTAL") {
+                xGcell_start = sproute_db::find_Gcell(rect.lowerLeft.x, defDB.xGcellBoundaries);
+                xGcell_end = sproute_db::find_Gcell(rect.upperRight.x, defDB.xGcellBoundaries);
+                yGcell_start = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
+                yGcell_end = sproute_db::find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
+            }
+            else if(lefDB.layers.at(i).direction == "VERTICAL") {
+                xGcell_start = sproute_db::find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
+                xGcell_end = sproute_db::find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
+                yGcell_start = sproute_db::find_Gcell(rect.lowerLeft.y, defDB.yGcellBoundaries);
+                yGcell_end = sproute_db::find_Gcell(rect.upperRight.y, defDB.yGcellBoundaries);
+            }
+            else {
+                cout << "unknown layer direction error " << endl;
+                exit(1);
+            }
             
             if(lefDB.layers.at(i).direction == "HORIZONTAL" && yGcell_end < defDB.gcellGridDim.y - 1)
                 yGcell_end += 1;
