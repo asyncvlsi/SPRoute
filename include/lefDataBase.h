@@ -183,6 +183,9 @@ public:
     std::vector<float> width;
     std::vector<float> spacing;
 
+    CornerSpacing() {
+        eolWidth = 0;
+    }
     void reset()
     {
         eolWidth = 0;

@@ -1,4 +1,4 @@
-# Power router for gridded cell placement
+# SPRoute: A Scalable Parallel Global Router
 
 ### Build tools
 * CMake, version >= 3.16

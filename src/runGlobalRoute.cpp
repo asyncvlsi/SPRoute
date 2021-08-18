@@ -447,7 +447,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 	int ESTEP3,CSTEP3, thStep3, tUsage, CSTEP4;
 	int Ripvalue, LVIter, cost_step;
 	int maxOverflow, past_cong, last_cong, finallength, numVia, ripupTH3D, newTH, healingTrigger;
-	int updateType, minofl, minoflrnd, mazeRound, upType, cost_type, bmfl, bwcnt;
+	int updateType, minofl, minoflrnd = 0, mazeRound, upType, cost_type, bmfl, bwcnt;
 	bool goingLV, healingNeed, noADJ, extremeNeeded, needOUTPUT;
 
 	int parts = 128;
