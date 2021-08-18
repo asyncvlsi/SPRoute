@@ -50,10 +50,19 @@ void readLUT(const char* fluteDir) {
       ns = (int)charnum[fgetc(fpwv)];
 
       if (ns == 0) { // same as some previous group
-        if (fscanf(fpwv, "%d\n", &kk) != 1)
+        if (fscanf(fpwv, "%d", &kk) != 1)
           abort_with_message("Unable to get needed info from POWV.");
         numsoln[d][k] = numsoln[d][kk];
         LUT[d][k]     = LUT[d][kk];
+
+	int mychar = '\n';
+	while (!feof (fpwv) && mychar == '\n') {
+	  mychar = fgetc (fpwv);
+	}
+	if (!feof (fpwv)) {
+	  ungetc (mychar, fpwv);
+	}
+
       } else {
         fgetc(fpwv); // '\n'
         numsoln[d][k] = ns;
@@ -135,10 +144,19 @@ void readLUT() {
       ns = (int)charnum[fgetc(fpwv)];
 
       if (ns == 0) { // same as some previous group
-        if (fscanf(fpwv, "%d\n", &kk) != 1)
+        if (fscanf(fpwv, "%d", &kk) != 1)
           abort_with_message("Unable to get needed info from POWV.");
         numsoln[d][k] = numsoln[d][kk];
         LUT[d][k]     = LUT[d][kk];
+
+	int mychar = '\n';
+	while (!feof (fpwv) && mychar == '\n') {
+	  mychar = fgetc (fpwv);
+	}
+	if (!feof (fpwv)) {
+	  ungetc (mychar, fpwv);
+	}
+
       } else {
         fgetc(fpwv); // '\n'
         numsoln[d][k] = ns;
