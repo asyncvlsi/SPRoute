@@ -90,7 +90,8 @@ void SPRoute::InvalidNetsAdj(Net** invalid_nets, int xGrid, int yGrid) {
         num_adj += InvalidNetsAdjLayer(x, y, 1, xGrid, yGrid);
         num_adj += InvalidNetsAdjLayer(x, y, 2, xGrid, yGrid);
     }
-    cout << "num of invalid net : " << numInvalidNets << "adj: " << num_adj << endl;
+    if(verbose_ > none)
+        cout << "num of invalid net : " << numInvalidNets << "adj: " << num_adj << endl;
 
 }
 

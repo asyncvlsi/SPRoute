@@ -4,7 +4,8 @@ namespace sproute {
 
 void SPRoute::PlotRudy(float* rudy, Algo algo) {
 
-    cout << xGrid << " " << yGrid << " grid" << endl;
+    if(verbose_ > none)
+        cout << xGrid << " " << yGrid << " grid" << endl;
     
 
     for(int i = 0; i < xGrid * yGrid; i++)
@@ -109,7 +110,8 @@ void SPRoute::PlotRudy(float* rudy, Algo algo) {
 
 float SPRoute::PlotPinDensity(float* pin_density, Algo algo) {
 
-    cout << xGrid << " " << yGrid << " grid" << endl;
+    if(verbose_ > none)
+        cout << xGrid << " " << yGrid << " grid" << endl;
     
     float pin_density_sum = 0;
     for(int i = 0; i < xGrid * yGrid; i++)
@@ -322,7 +324,8 @@ void SPRoute::PlotDrcMap() {
 void SPRoute::RUDY_scheduler(int iter, int max_overflow, int counted_num_part, std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done) {
   int max_parts = 512;
   vecParts.resize(max_parts);
-  cout << "RUDY scheduling" << endl;
+  if(verbose_ > none)
+    cout << "RUDY scheduling" << endl;
   galois::LargeArray<float> rudy;
   float max_rudy[max_parts];
   rudy.allocateBlocked(max_parts * xGrid * yGrid);
@@ -428,11 +431,14 @@ void SPRoute::RUDY_scheduler(int iter, int max_overflow, int counted_num_part, s
     }
   }
 
-  for(int batchID = 0; batchID < max_parts; batchID++) {
-    cout << vecParts[batchID].size() << " ";
+  if(verbose_ > none) {
+    for(int batchID = 0; batchID < max_parts; batchID++) {
+        cout << vecParts[batchID].size() << " ";
+    }
+
+    cout << endl;
+    cout << "RUDY scheduling done, find: " << find << " end: " << end << endl;
   }
-  cout << endl;
-  cout << "RUDY scheduling done, find: " << find << " end: " << end << endl;
   rudy.destroy();
 
 }

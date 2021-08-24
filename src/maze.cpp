@@ -1,3 +1,4 @@
+#include "sproute.h"
 #include "maze.h"
 #include "global_variable_extern.h"
 
@@ -273,13 +274,14 @@ void extractMin(float** array, int arrayLen) {
  * round : the number of maze route stages runned
  */
 
-void updateCongestionHistory(int upType) {
+void SPRoute::updateCongestionHistory(int upType) {
   int i, j, grid, maxlimit;
   float overflow;
 
   maxlimit = 0;
 
-  printf("updateType %d\n", upType);
+  if(verbose_ > none)
+    printf("updateType %d\n", upType);
 
   if (upType == 1) {
     for (i = 0; i < yGrid; i++) {
@@ -444,7 +446,8 @@ void updateCongestionHistory(int upType) {
 
   max_adj = maxlimit;
 
-  printf("max value %d stop %d\n", maxlimit, stopDEC);
+  if(verbose_ > none)
+    printf("max value %d stop %d\n", maxlimit, stopDEC);
 }
 
 // ripup a tree edge according to its ripup type and Z-route it
@@ -1029,7 +1032,7 @@ void reInitTree(int netID) {
 
 
 
-int getOverflow2Dmaze(int* maxOverflow, int* tUsage, bool after_maze) {
+int SPRoute::getOverflow2Dmaze(int* maxOverflow, int* tUsage, bool after_maze) {
   int i, j, grid, overflow, max_overflow, H_overflow, max_H_overflow,
       V_overflow, max_V_overflow, numedges = 0;
   int total_usage, total_cap;
@@ -1082,16 +1085,18 @@ int getOverflow2Dmaze(int* maxOverflow, int* tUsage, bool after_maze) {
 
   max_overflow  = max(max_H_overflow, max_V_overflow);
   totalOverflow = H_overflow + V_overflow;
-  *maxOverflow  = max_overflow;
+  *maxOverflow  = max_overflow; 
 
-  printf("total Usage   : %d\n", (int)total_usage);
-  printf("Max H Overflow: %d\n", max_H_overflow);
-  printf("Max V Overflow: %d\n", max_V_overflow);
-  printf("Max Overflow  : %d\n", max_overflow);
-  printf("Num Overflow e: %d\n", numedges);
-  printf("H   Overflow  : %d\n", H_overflow);
-  printf("V   Overflow  : %d\n", V_overflow);
-  printf("Final Overflow: %d\n\n", totalOverflow);
+  if(verbose_ > none) {
+    printf("total Usage   : %d\n", (int)total_usage);
+    printf("Max H Overflow: %d\n", max_H_overflow);
+    printf("Max V Overflow: %d\n", max_V_overflow);
+    printf("Max Overflow  : %d\n", max_overflow);
+    printf("Num Overflow e: %d\n", numedges);
+    printf("H   Overflow  : %d\n", H_overflow);
+    printf("V   Overflow  : %d\n", V_overflow);
+    printf("Final Overflow: %d\n\n", totalOverflow);
+  }
 
   *tUsage = total_usage;
 
@@ -1199,7 +1204,7 @@ void checkUsageCorrectness() {
   delete[] hedge_usage;
 }
 
-int getOverflow2D(int* maxOverflow) {
+int SPRoute::getOverflow2D(int* maxOverflow) {
   int i, j, grid, overflow, max_overflow, H_overflow, max_H_overflow,
       V_overflow, max_V_overflow, numedges;
   int total_usage, total_cap, hCap, vCap;
@@ -1252,21 +1257,23 @@ int getOverflow2D(int* maxOverflow) {
     ahTH = 20;
   }
 
-  printf("total hCap    : %d\n", hCap);
-  printf("total vCap    : %d\n", vCap);
-  printf("total Usage   : %d\n", (int)total_usage);
-  printf("Max H Overflow: %d\n", max_H_overflow);
-  printf("Max V Overflow: %d\n", max_V_overflow);
-  printf("Max Overflow  : %d\n", max_overflow);
-  printf("Num Overflow e: %d\n", numedges);
-  printf("H   Overflow  : %d\n", H_overflow);
-  printf("V   Overflow  : %d\n", V_overflow);
-  printf("Final Overflow: %d\n\n", totalOverflow);
+  if(verbose_ > none) {
+    printf("total hCap    : %d\n", hCap);
+    printf("total vCap    : %d\n", vCap);
+    printf("total Usage   : %d\n", (int)total_usage);
+    printf("Max H Overflow: %d\n", max_H_overflow);
+    printf("Max V Overflow: %d\n", max_V_overflow);
+    printf("Max Overflow  : %d\n", max_overflow);
+    printf("Num Overflow e: %d\n", numedges);
+    printf("H   Overflow  : %d\n", H_overflow);
+    printf("V   Overflow  : %d\n", V_overflow);
+    printf("Final Overflow: %d\n\n", totalOverflow);
+  }
 
   return (totalOverflow);
 }
 
-int getOverflow3D(void) {
+int SPRoute::getOverflow3D(void) {
   int i, j, k, grid, overflow, max_overflow, H_overflow, max_H_overflow,
       V_overflow, max_V_overflow;
   int cap;
@@ -1312,14 +1319,16 @@ int getOverflow3D(void) {
   max_overflow  = max(max_H_overflow, max_V_overflow);
   totalOverflow = H_overflow + V_overflow;
 
-  printf("total Usage   : %d\n", total_usage);
-  printf("Total Capacity: %d\n", cap);
-  printf("Max H Overflow: %d\n", max_H_overflow);
-  printf("Max V Overflow: %d\n", max_V_overflow);
-  printf("Max Overflow  : %d\n", max_overflow);
-  printf("H   Overflow  : %d\n", H_overflow);
-  printf("V   Overflow  : %d\n", V_overflow);
-  printf("Final Overflow: %d\n\n", totalOverflow);
+  if(verbose_ > none) {
+    printf("total Usage   : %d\n", total_usage);
+    printf("Total Capacity: %d\n", cap);
+    printf("Max H Overflow: %d\n", max_H_overflow);
+    printf("Max V Overflow: %d\n", max_V_overflow);
+    printf("Max Overflow  : %d\n", max_overflow);
+    printf("H   Overflow  : %d\n", H_overflow);
+    printf("V   Overflow  : %d\n", V_overflow);
+    printf("Final Overflow: %d\n\n", totalOverflow);
+  }
 
   return (total_usage);
 }

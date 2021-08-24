@@ -1,3 +1,4 @@
+#include "sproute.h"
 #include "utility.h"
 
 namespace sproute {
@@ -327,7 +328,7 @@ void netpinOrderInc()
 }
 
 
-void fillVIA()
+void SPRoute::fillVIA()
 {
 	short tmpX[MAXLEN], tmpY[MAXLEN],*gridsX,*gridsY,*gridsL, tmpL[MAXLEN];
 	int i, k, netID, edgeID, routeLen, n1a, n2a;
@@ -465,8 +466,10 @@ void fillVIA()
 //			printEdge3D(netID, edgeID);
 		}
 	}
-	printf("via related to pin nodes %d\n",numVIAT1);
-	printf("via related stiner nodes %d\n",numVIAT2);
+	if(verbose_ > none) {
+		printf("via related to pin nodes %d\n",numVIAT1);
+		printf("via related stiner nodes %d\n",numVIAT2);
+	}
 
 }
 
@@ -1114,7 +1117,7 @@ int findLayer(int netID, TreeNode treenode)
 	exit(1);
 }
 
-void newLA ()
+void SPRoute::newLA ()
 {
 	int netID, i,d, k, edgeID,nodeID,deg, numpoints, n1, n2, corN,  tmpX[MAXLEN], tmpY[MAXLEN],*gridsX,*gridsY,*gridsL, tmpL[MAXLEN], routeLen, n1a, n2a;;
 	int n1x, n1y, n1l, n2x, n2y, n2l,  grid, numError, preH, preV, min_y, min_x,connectionCNT;
@@ -1210,9 +1213,13 @@ void newLA ()
 		}
 	}
 
-	printf("node processing\n");
+	if(verbose_ > none) {
+		printf("node processing\n");
+	}
 	newLayerAssignmentV4();
-	printf("layer assignment\n");
+	if(verbose_ > none) {
+		printf("layer assignment\n");
+	}
 	numVIA = 0;
 	ConvertToFull3DType2() ;
 }
@@ -1524,9 +1531,7 @@ void recoverEdge(int netID, int edgeID)
 
 }
 
-
- 
-void checkUsage()
+void SPRoute::checkUsage()
 {
 	short *gridsX, *gridsY, *gridsL, tmp_gridsX[XRANGE], tmp_gridsY[XRANGE];
 	int netID, d, i,k, edgeID,nodeID,deg, lastX, lastY,lastL, xreal, yreal,l, routeLen;
@@ -1583,8 +1588,8 @@ void checkUsage()
 			}
 		}
 	}
-
-	printf("usage checked\n");
+	if(verbose_ > none)
+		printf("usage checked\n");
 }
 
 void netedgeOrderDec(int netID, OrderNetEdge* netEO)
@@ -1793,7 +1798,7 @@ void copyRS (void)
 }
 
 
-void copyBR ()
+void SPRoute::copyBR ()
 {
 	short *gridsX, *gridsY;
 	int i,j,netID,p,q, k, edgeID, numEdges, xmin, xmax, ymin, ymax, numNodes, grid, min_y, min_x;
@@ -1804,9 +1809,9 @@ void copyBR ()
 
 	if (sttreesBK != NULL) {
 
-		printf("copy BR working\n");
+		if(verbose_ > none)
+			printf("copy BR working\n");
 	
-
 		for(netID=0; netID<numValidNets; netID++) {
 			numEdges = 2 * sttrees[netID].deg -3;
 			treeedges = sttrees[netID].edges;

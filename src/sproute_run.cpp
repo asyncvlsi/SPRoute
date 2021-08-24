@@ -17,7 +17,8 @@ void SPRoute::Run() {
 
     InitGrGen();
     RunGlobalRoute("", max_iteration, algo);
-    std::cout << "routing guides written into phydb" << std::endl;
+    if(verbose_ > none)
+        std::cout << "routing guides written into phydb" << std::endl;
 
 }
 

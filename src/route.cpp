@@ -1,4 +1,5 @@
 #include "route.h"
+#include "sproute.h"
 
 namespace sproute {
 void estimateOneSeg(Segment* seg) {
@@ -1775,10 +1776,11 @@ void routeLVEnew(int netID, int edgeID, int threshold, int enlarge) {
   }   // non-degraded edge
 }
 
-void routeLVAll(int threshold, int expand) {
+void SPRoute::routeLVAll(int threshold, int expand) {
   int netID, edgeID, numEdges, i, forange;
 
-  printf("%d threshold, %d expand\n", threshold, expand);
+  if(verbose_ > none)
+    printf("%d threshold, %d expand\n", threshold, expand);
 
   h_costTable = (float*)calloc(10 * hCapacity, sizeof(float));
 

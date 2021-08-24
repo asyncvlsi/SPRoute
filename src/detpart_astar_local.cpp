@@ -1134,11 +1134,12 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
   } // end for parts
 
   roundtimer1.stop();
-  printf("rtimer: %d\n", (int)roundtimer1.get());
+  if(verbose_ > none) {
+    printf("rtimer: %d\n", (int)roundtimer1.get());
 
-  printf("total ripups: %d max ripups: %d\n", total_ripups.reduce(),
-         max_ripups.reduce());
-  //}, "mazeroute vtune function");
+    printf("total ripups: %d max ripups: %d\n", total_ripups.reduce(),
+          max_ripups.reduce());
+  }
   free(h_costTable);
   free(v_costTable);
 
@@ -1147,9 +1148,11 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
 
     acc_count += count.reduce();
 
-	std::cout <<" count: " << count.reduce() << " acc_count: " << acc_count << " remaining: " << numValidNets - acc_count << std::endl;
-  std::cout <<" astar ripups: " << astar_count.reduce() << " maze ripup: " << maze_count.reduce() << endl;
+  if(verbose_ > none) {
+    std::cout <<" count: " << count.reduce() << " acc_count: " << acc_count << " remaining: " << numValidNets - acc_count << std::endl;
+    std::cout <<" astar ripups: " << astar_count.reduce() << " maze ripup: " << maze_count.reduce() << endl;
     std::cout << "total queue cnt: " << total_queue_cnt.reduce() << " total dequeue cnt: " << total_dequeue_cnt.reduce() << endl;
+  }
 
   //checkOverflowRemaining(done);
 

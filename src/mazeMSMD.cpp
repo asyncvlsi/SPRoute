@@ -903,15 +903,18 @@ void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_th
       galois::steal(),
       // galois::chunk_size<64>(),
       galois::loopname("net-level parallelism")); // galois::do_all
-
-  printf("total ripups: %d max ripups: %d\n", total_ripups.reduce(),
+  
+  if(verbose_ > none)
+    printf("total ripups: %d max ripups: %d\n", total_ripups.reduce(),
          max_ripups.reduce());
   //}, "mazeroute vtune function");
 
     acc_count += count.reduce();
 
-	std::cout <<" count: " << count.reduce() << " acc_count: " << acc_count << " remaining: " << numValidNets - acc_count << std::endl;
-  std::cout << "total queue cnt: " << total_queue_cnt.reduce() << endl;
+  if(verbose_ > none) {
+    std::cout <<" count: " << count.reduce() << " acc_count: " << acc_count << " remaining: " << numValidNets - acc_count << std::endl;
+    std::cout << "total queue cnt: " << total_queue_cnt.reduce() << endl;
+  }
   free(h_costTable);
   free(v_costTable);
 }

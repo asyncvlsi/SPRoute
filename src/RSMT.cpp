@@ -1,4 +1,5 @@
 #include "RSMT.h"
+#include "sproute.h"
 #include "global_variable_extern.h"
 
 namespace sproute {
@@ -622,7 +623,7 @@ float coeffADJ(int netID) {
   return (coef);
 }
 
-void gen_brk_RSMT(bool congestionDriven, bool reRoute, bool genTree,
+void SPRoute::gen_brk_RSMT(bool congestionDriven, bool reRoute, bool genTree,
                   bool newType, bool noADJ) {
   int i, j, d, n, netID, n1, n2;
   int x1, y1, x2, y2;
@@ -769,13 +770,16 @@ void gen_brk_RSMT(bool congestionDriven, bool reRoute, bool genTree,
     }
   } // loop i
 
-  printf("WIRELEN : %d, WIRELEN1 : %d\n", wl, wl1);
-  printf("NumSeg  : %d\n", totalNumSeg);
-  printf("NumShift: %d\n", numShift);
-  printf("totalnon %d\n", totalnon);
-  printf("Max %f, Min %f\n", coefMax, coefMin);
-  printf("cnt1 %d, cnt2 %d, cnt3 %d\n", cnt1, cnt2, cnt3);
+  if(verbose_ > none) {
+    printf("WIRELEN : %d, WIRELEN1 : %d\n", wl, wl1);
+    printf("NumSeg  : %d\n", totalNumSeg);
+    printf("NumShift: %d\n", numShift);
+    printf("totalnon %d\n", totalnon);
+    printf("Max %f, Min %f\n", coefMax, coefMin);
+    printf("cnt1 %d, cnt2 %d, cnt3 %d\n", cnt1, cnt2, cnt3);
+  }
 }
+
 
 
 } //namespace sproute

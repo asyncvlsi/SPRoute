@@ -584,11 +584,13 @@ void SPRoute::UpdateGcellGrid(int xtrack_step, int ytrack_step)
     tmpGcellGrid_y1.step = defDB.dieArea.upperRight.y - tmpGcellGrid_y1.start;
     tmpGcellGrid_y1.direction = "Y" ;
 
-    cout << "GCELLGRID TO BE ADDED: " << endl;
-    cout << "GCELLGRID X " << tmpGcellGrid_x.start << " DO " << tmpGcellGrid_x.numBoundaries << " STEP " << tmpGcellGrid_x.step << endl;
-    cout << "GCELLGRID X " << tmpGcellGrid_x1.start << " DO " << tmpGcellGrid_x1.numBoundaries << " STEP " << tmpGcellGrid_x1.step << endl;
-    cout << "GCELLGRID Y " << tmpGcellGrid_y.start << " DO " << tmpGcellGrid_y.numBoundaries << " STEP " << tmpGcellGrid_y.step << endl;
-    cout << "GCELLGRID Y " << tmpGcellGrid_y1.start << " DO " << tmpGcellGrid_y1.numBoundaries << " STEP " << tmpGcellGrid_y1.step << endl;
+    if(verbose_ > none) {
+        cout << "GCELLGRID TO BE ADDED: " << endl;
+        cout << "GCELLGRID X " << tmpGcellGrid_x.start << " DO " << tmpGcellGrid_x.numBoundaries << " STEP " << tmpGcellGrid_x.step << endl;
+        cout << "GCELLGRID X " << tmpGcellGrid_x1.start << " DO " << tmpGcellGrid_x1.numBoundaries << " STEP " << tmpGcellGrid_x1.step << endl;
+        cout << "GCELLGRID Y " << tmpGcellGrid_y.start << " DO " << tmpGcellGrid_y.numBoundaries << " STEP " << tmpGcellGrid_y.step << endl;
+        cout << "GCELLGRID Y " << tmpGcellGrid_y1.start << " DO " << tmpGcellGrid_y1.numBoundaries << " STEP " << tmpGcellGrid_y1.step << endl;
+    }
 
     defDB.gcellGrids.push_back(tmpGcellGrid_x);
     defDB.gcellGrids.push_back(tmpGcellGrid_x1);
@@ -605,7 +607,9 @@ void SPRoute::GenerateGcellGrid()
     {
         if(layer.type == "ROUTING")
         {
-            cout << "layer for gcell: " << layer.name << endl;
+            if(verbose_ > none) {
+                cout << "layer for gcell: " << layer.name << endl;
+            }
             routing_layer_name = layer.name;
             for(auto track : defDB.tracks)
             {
@@ -621,7 +625,9 @@ void SPRoute::GenerateGcellGrid()
             break;
         }
     }
-    cout << "for GcellGrid xtrack_step: " << xtrack_step << "ytrack_step: " << ytrack_step << endl;
+    if(verbose_ > none) {
+        cout << "for GcellGrid xtrack_step: " << xtrack_step << "ytrack_step: " << ytrack_step << endl;
+    }
 
     UpdateGcellGrid(xtrack_step, ytrack_step);
 }
@@ -724,7 +730,6 @@ void SPRoute::InitGcell()
     defDB.gcellGridDim.z = numRoutingLayers;
     
     assert(defDB.gcellGridDim.x > 0 && defDB.gcellGridDim.y > 0 && defDB.gcellGridDim.z > 0);
-    //cout << "here? " << defDB.gcellGridDim.x << " " <<  defDB.gcellGridDim.y << " " <<  defDB.gcellGridDim.z << endl;
     defDB.gcells.resize(defDB.gcellGridDim.x * defDB.gcellGridDim.y * defDB.gcellGridDim.z);
 }
 
@@ -797,8 +802,6 @@ void SPRoute::PreprocessSNet()
             }
             else // is a Via
             {
-                //if(path.begin.x == 31500 && path.begin.y == 263600)
-                //    cout << "here" << endl;
                 if(lefDB.lefVia2idx.count(path.viaName))
                 {
                     int viaIdx = lefDB.lefVia2idx.find(path.viaName)->second;
@@ -865,7 +868,9 @@ void SPRoute::PreprocessDesignRule()
             continue;
         string layerName = lefDB.layers.at(i).name;
 
-        cout << "design rule: " << layerName << endl;
+        if(verbose_ > none) {
+            cout << "design rule: " << layerName << endl;
+        }
 
         int trackIdx = defDB.layeridx2trackidx.find(i)->second;
         int trackStep = defDB.tracks.at(trackIdx).step;
@@ -943,8 +948,6 @@ void SPRoute::PreprocessDesignRule()
                 intRect.upperRight.y = rect.upperRight.y;
                 defDB.designRuleOBS.at(i).push_back(intRect);
             }
-
-            //cout << "rect: " << rect.lowerLeft.x << "," << rect.lowerLeft.y << " " << rect.upperRight.x << "," << rect.upperRight.y << " expand:" << expand << endl;
         }
     }
 }
@@ -956,7 +959,8 @@ void SPRoute::AdjustGcellCap()
     {
         if(defDB.designRuleOBS.at(i).size() != 0 && lefDB.layers.at(i).type == "ROUTING")
         {
-            cout << lefDB.layers.at(i).name << endl;
+            if(verbose_ > none)
+                cout << lefDB.layers.at(i).name << endl;
         
             for(int x = 0; x < defDB.xGcellBoundaries.size() - 2; x++)
             {
@@ -985,9 +989,6 @@ void SPRoute::AdjustGcellCap()
                         continue;
 
                     sproute_db::Gcell& nextGcell = defDB.getGcell(next_x, next_y, i/2);
-
-                    //if(debug)
-                    //    cout << x << " " << y << endl;
 
                     if(gcell.obs_state == sproute_db::NO_OBS && nextGcell.obs_state == sproute_db::NO_OBS)
                         continue;
@@ -1045,7 +1046,8 @@ void SPRoute::PreprocessDesignRuleOBS()
             continue;
         string layerName = lefDB.layers.at(i).name;
 
-        cout << layerName << ": " << defDB.designRuleOBS.at(i).size() << " obs" <<endl;
+        if(verbose_ > none)
+            cout << layerName << ": " << defDB.designRuleOBS.at(i).size() << " obs" <<endl;
 
         int trackIdx = defDB.layeridx2trackidx.find(i)->second;
         int trackStep = defDB.tracks.at(trackIdx).step;
@@ -1053,9 +1055,6 @@ void SPRoute::PreprocessDesignRuleOBS()
         for(int OBSIdx = 0; OBSIdx < defDB.designRuleOBS.at(i).size(); OBSIdx++)
         {
             auto rect = defDB.designRuleOBS.at(i).at(OBSIdx);
-
-            //if(rect.lowerLeft.x == 1793920 && rect.lowerLeft.y == 1560150)
-            //    cout << "ok i find this obs" << endl;
 
             int xGcell_start = 0;
             int yGcell_start = 0;
@@ -1093,20 +1092,7 @@ void SPRoute::PreprocessDesignRuleOBS()
             {
                 for(int y = yGcell_start; y < yGcell_end; y++)
                 {
-                    /*CapReduction tmpCapReduction;
-                    tmpCapReduction.x = x;
-                    tmpCapReduction.y = y;
-                    tmpCapReduction.z = i / 2;*/
-                    //cout << " OBS GRID: " << x << " " << y << endl;
-                    //if(x == 10 && y == 189) 
-                    //    cout << "10, 189 obs inserted: " << rect << endl;
                     GcellInsertOBS(x, y , i / 2, rect, OBSIdx); 
-                    /*CapReduction tmpCapReduction;
-                    tmpCapReduction.x = x;
-                    tmpCapReduction.y = y;
-                    tmpCapReduction.z = i / 2;
-                    tmpCapReduction.newCap = 0;
-                    defDB.capReductions.push_back(tmpCapReduction);*/
                 }
                 
             }
@@ -1272,10 +1258,11 @@ void SPRoute::InitGrGen() {
 	            exit(1);
 	        }
 	    }
-	    cout << grGen.grid.x << " " << grGen.grid.y << " " << grGen.grid.z << endl;
-
-	    cout << "gcellbegin: " << grGen.gcellBegin.x << " " << grGen.gcellBegin.y <<endl;
-	    cout << "gcellSize: " << grGen.gcellSize.x << " " << grGen.gcellSize.y <<endl;
+        if(verbose_ > none) {
+            cout << grGen.grid.x << " " << grGen.grid.y << " " << grGen.grid.z << endl;
+            cout << "gcellbegin: " << grGen.gcellBegin.x << " " << grGen.gcellBegin.y <<endl;
+            cout << "gcellSize: " << grGen.gcellSize.x << " " << grGen.gcellSize.y <<endl;
+        }
 
 
 	    for(auto layer : lefDB.layers)
@@ -1331,29 +1318,29 @@ void SPRoute::InitGrGen() {
 			}
 		}
 
-		cout << " vcap: " ;
-		for(auto cap : grGen.vCap)
-			cout << cap << " ";
-		cout << endl;
+        if(verbose_ > none) {
+            cout << " vcap: " ;
+            for(auto cap : grGen.vCap)
+                cout << cap << " ";
+            cout << endl;
 
-		cout << " hcap: " ;
-		for(auto cap : grGen.hCap)
-			cout << cap << " ";
-		cout << endl;
+            cout << " hcap: " ;
+            for(auto cap : grGen.hCap)
+                cout << cap << " ";
+            cout << endl;
+        }
 
 
 
 		int cnt = 0, cnt1=0;
 		grGen.numNets = defDB.nets.size();
-        cout << "total number of nets: " << grGen.numNets << endl;
+        if(verbose_ > none)
+            cout << "total number of nets: " << grGen.numNets << endl;
         grGen.grnets.reserve(grGen.numNets);
         grGen.grnets.resize(grGen.numNets);
 
-		//for(auto net : defDB.nets)   //TODO: This should be parallelized
-		//{
- 
-			cout << "enters here? " << endl;
-     galois::do_all(
+
+        galois::do_all(
 		 	galois::iterate( 0, grGen.numNets),
 				[&](int idx) {
 			sproute_db::grNet& tmpGRnet = grGen.grnets[idx];
@@ -1363,7 +1350,7 @@ void SPRoute::InitGrGen() {
 			tmpGRnet.idx = cnt;
 			cnt++;
 			int numPins = net.pinNames.size();
-			if(numPins > 1000)
+			if(verbose_ > none && numPins > 1000)
 				cout << "large net: " << net.name << " " << numPins << endl;
 			tmpGRnet.numPins = numPins;
             tmpGRnet.pins.reserve(numPins);
@@ -1435,16 +1422,13 @@ void SPRoute::InitGrGen() {
 				}
 				sproute_db::Point3D<int> grpin(x, y, z);
 				tmpGRnet.pins.push_back(grpin);
-				//cout << x << " " << y << " " << z << endl;
 			}
-            /*cout << " 9 " << idx << endl;
-			grGen.grnets[idx] = tmpGRnet;
-            cout << " 10 " << endl;*/
+
 
 		}, galois::steal());
 
-		std::cout << "numnets: " << grGen.numNets << endl;
-
+        if(verbose_ > none)
+		    std::cout << "numnets: " << grGen.numNets << endl;
 }
 
 

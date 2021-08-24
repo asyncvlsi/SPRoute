@@ -68,17 +68,18 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
     vCapacity_ub = UB*vCapacity;
     hCapacity_ub = UB*hCapacity;
 
-    printf("\n");
-    printf("grid %d %d %d\n", xGrid, yGrid, numLayers);
-    for (int i=0;i<numLayers;i++)
-    { 
-        printf("Layer %d vertical capacity %d, horizontal capacity %d\n", i, vCapacity3D[i], hCapacity3D[i]);
-    }
-    
-
-    printf("total vertical capacity %d\n", vCapacity);
-    printf("total horizontal capacity %d\n", hCapacity);
-    printf("num net %d\n", numNets);
+	if(verbose_ > none) {
+		printf("\n");
+		printf("grid %d %d %d\n", xGrid, yGrid, numLayers);
+		for (int i=0;i<numLayers;i++)
+		{ 
+			printf("Layer %d vertical capacity %d, horizontal capacity %d\n", i, vCapacity3D[i], hCapacity3D[i]);
+		}
+	
+		printf("total vertical capacity %d\n", vCapacity);
+		printf("total horizontal capacity %d\n", hCapacity);
+		printf("num net %d\n", numNets);
+	}
 
     // allocate memory for nets
     nets = (Net**) malloc(numNets*sizeof(Net*));
@@ -102,7 +103,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
         strcpy(netName, grGen.grnets.at(i).name.c_str());
         netID = grGen.grnets.at(i).idx;
         numPins = grGen.grnets.at(i).numPins;
-        if(numPins > 1000)
+        if(verbose_ > none && numPins > 1000)
             cout << "reading large net: " << netName << " " << numPins << endl;
         //cout << netName << " " << netID << " " << numPins << endl;
         if (1)
@@ -181,12 +182,13 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
             }
         }//if
 
-        if(numPins > 1000)
+        if(verbose_ > none && numPins > 1000)
             cout << "reading large net finished: " << netName << endl;
-        if(i%10000 == 0)
+        if(verbose_ > none && i%10000 == 0)
             cout << "read " << i << " nets." << endl;
     } // loop i
-    printf("the total net number is %d\n\n",net);
+	if(verbose_ > none)
+    	printf("the total net number is %d\n\n",net);
 
     if((pinInd>1))
     {
@@ -205,7 +207,8 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
         exit(0);
     }
 	float avg_pin_den = PlotPinDensity(rudy, algo);
-	cout << "avg pin density: " << avg_pin_den << endl;
+	if(verbose_ > none)
+		cout << "avg pin density: " << avg_pin_den << endl;
 	if(algo == RUDY || algo == PIN_DENSITY || algo == DRC_MAP) {
 		exit(0) ;
 	}
@@ -363,22 +366,8 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 
     }
 	InvalidNetsAdj(invalid_nets, xGrid, yGrid);
-
-	/*int tmpX = 145, tmpY = 87;
-	int grid2D = tmpY*xGrid+tmpX;
-	cout << "145, 87: " << v_edges[grid2D].cap << endl;
-	for(int k = 0; k < numLayers; k++) {
-		int grid3D = tmpY*xGrid+tmpX+k*xGrid*(yGrid-1);
-		cout << " 3D cap: " << v_edges3D[grid3D].cap << endl;
-	}*/
-
 	MemPinAdj(xGrid, yGrid);
 
-	/*cout << "145, 87: " << v_edges[grid2D].cap << endl;
-	for(int k = 0; k < numLayers; k++) {
-		int grid3D = tmpY*xGrid+tmpX+k*xGrid*(yGrid-1);
-		cout << " 3D cap: " << v_edges3D[grid3D].cap << endl;
-	}*/
 
 	treeOrderCong = NULL;
 	stopDEC = false;
@@ -402,36 +391,15 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 	}
     
     MaxDegree=MD;
-    
-    printf("# valid nets: %d\n", numValidNets);
-    printf("# segments: %d\n", segcount);
-    printf("maxDeg:     %d\n", maxDeg);
-    printf("\nDone getting input\n");
-    printf("MD: %d, AD: %.2f, #nets: %d, #routed nets: %d\n", MD, (float)TD/newnetID, numNets, newnetID); 
-    printf("TC is %d\n",TC);  
 
-
-	/*parentX1 = (short**)calloc(yGrid, sizeof(short*));
-    parentY1 = (short**)calloc(yGrid, sizeof(short*));
-    parentX3 = (short**)calloc(yGrid, sizeof(short*));
-    parentY3 = (short**)calloc(yGrid, sizeof(short*));
-
-   
-    for(i=0; i<yGrid; i++)
-    {
-        parentX1[i] = (short*)calloc(xGrid, sizeof(short));
-        parentY1[i] = (short*)calloc(xGrid, sizeof(short));
-        parentX3[i] = (short*)calloc(xGrid, sizeof(short));
-        parentY3[i] = (short*)calloc(xGrid, sizeof(short));
-    }*/
-    
-    
-    /*pop_heap2 = (Bool*)calloc(yGrid*XRANGE, sizeof(Bool));
-
-    // allocate memory for priority queue
-    heap1 = (float**)calloc((yGrid*xGrid), sizeof(float*));
-    heap2 = (float**)calloc((yGrid*xGrid), sizeof(float*));*/
-        
+	if(verbose_ > none) {
+		printf("# valid nets: %d\n", numValidNets);
+		printf("# segments: %d\n", segcount);
+		printf("maxDeg:     %d\n", maxDeg);
+		printf("\nDone getting input\n");
+		printf("MD: %d, AD: %.2f, #nets: %d, #routed nets: %d\n", MD, (float)TD/newnetID, numNets, newnetID); 
+		printf("TC is %d\n",TC);  
+	}
 	sttreesBK = NULL;
 }
 
@@ -461,7 +429,9 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
     bool input, WriteOut;
     input=WriteOut=0;
-    cout << " nthreads: " << numThreads << endl;
+	if(verbose_ > none) {
+    	cout << " nthreads: " << numThreads << endl;
+	}
     if(OutFileName != "")
     {
     	needOUTPUT = true;
@@ -501,15 +471,14 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
      //galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE> thread_local_storage;
     galois::setActiveThreads(numThreads);
-    galois::on_each( 
+	if(verbose_ > none) {
+    	galois::on_each( 
             [&] (const unsigned tid, const unsigned numT)
             {
                 printf("threadid: %d total numT: %d\n", tid, numT);
             }
             );
-
-   cout << " nthreads: " << numThreads << endl;
-
+	}
     
    int thread_choice = 0;
    int thread_steps[6] = {28,14,8,4,1};
@@ -520,28 +489,33 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
     if(1)
 	{
 		t1 = clock();
-		printf("\nReading %s ...\n", benchFile);
+		if(verbose_ > none) {
+			printf("\nReading %s ...\n", benchFile);
+		}
 		//readFile(benchFile);
 		ReadGR(grGen, algo);
 
-		printf("\nReading Lookup Table ...\n");
-                if (getenv ("ACT_HOME") == NULL) {
-  		   readLUT();
-                }
-                else {
-	           char *lpath = (char *)malloc (strlen (getenv ("ACT_HOME")) + 6);
-		   sprintf (lpath, "%s/lib/", getenv ("ACT_HOME"));
-		   readLUT (lpath);
-                   free (lpath);
-                }
-		printf("\nDone reading table\n\n");  
+		if(verbose_ > none)
+			printf("\nReading Lookup Table ...\n");
+        if (getenv ("ACT_HOME") == NULL) {
+  		   	readLUT();
+        }
+        else {
+	    	char *lpath = (char *)malloc (strlen (getenv ("ACT_HOME")) + 6);
+			sprintf (lpath, "%s/lib/", getenv ("ACT_HOME"));
+			readLUT (lpath);
+            free (lpath);
+        }
+		if(verbose_ > none)
+			printf("\nDone reading table\n\n");  
 
 		
 
 
 		t2 = clock();
 		reading_Time = (float)(t2-t1)/CLOCKS_PER_SEC;
-		printf("Reading Time: %f sec\n", reading_Time);
+		if(verbose_ > none)
+			printf("Reading Time: %f sec\n", reading_Time);
 	    
 		// call FLUTE to generate RSMT and break the nets into segments (2-pin nets)
 
@@ -549,17 +523,23 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 		//viacost = VIA;
 		viacost = 0;
 		gen_brk_RSMT(false, false, false, false, noADJ);
-		printf("first L\n");
+		if(verbose_ > none) {
+			printf("first L\n");
+		}
 		routeLAll(true);
         gen_brk_RSMT(false, true,true,false, noADJ);
 		//gen_brk_RSMT(true, true,true,false, noADJ); // for the contest only
 		getOverflow2D( &maxOverflow);
-		printf("second L\n");
+		if(verbose_ > none) {
+			printf("second L\n");
+		}
 		newrouteLAll(false, true);
 		getOverflow2D( &maxOverflow); 
 		spiralRouteAll ();
 		newrouteZAll(10) ;
-		printf("first Z\n");
+		if(verbose_ > none) {
+			printf("first Z\n");
+		}
 		past_cong = getOverflow2D( &maxOverflow); 
 
 		convertToMazeroute();
@@ -588,7 +568,9 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
 			LOGIS_COF = max (2.0/(1+log(maxOverflow)), LOGIS_COF);
 			LOGIS_COF = 2.0/(1+log(maxOverflow));
-			printf("LV routing round %d, enlarge %d \n", i,enlarge);
+			if(verbose_ > none) {
+				printf("LV routing round %d, enlarge %d \n", i,enlarge);
+			}
 			routeLVAll(newTH, enlarge);
 
 			past_cong = getOverflow2Dmaze( &maxOverflow , & tUsage, false); 
@@ -602,7 +584,9 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 	
 		t3 = clock();
 		reading_Time = (float)(t3-t2)/CLOCKS_PER_SEC;
-		printf("LV Time: %f sec\n", reading_Time);
+		if(verbose_ > none) {
+			printf("LV Time: %f sec\n", reading_Time);
+		}
 		InitEstUsage();
 
 		i=1;
@@ -631,16 +615,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
 		while(totalOverflow>0)
 		{
-			/*if(THRESH_M>15) {
-				THRESH_M-=thStep1;
-			} else if(THRESH_M>=2) {
-				THRESH_M-=thStep2;
-			} else {
-				THRESH_M = 0;
-			}
-			if(THRESH_M<=0) {
-				THRESH_M=0;
-			}*/
+
 			THRESH_M = 0;
 			//std::cout << "totalOverflow : " << totalOverflow << " enlarge: " << enlarge << std::endl; 
 			if(totalOverflow>2000)
@@ -690,9 +665,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
 			 
 			enlarge = min (enlarge, max(xGrid, yGrid)/2);
-			//std::cout << "costheight : " << costheight << " enlarge: " << enlarge << std::endl; 
 			costheight+=cost_step;
-			//std::cout << "costheight : " << costheight << " enlarge: " << enlarge << std::endl; 
 			mazeedge_Threshold = THRESH_M;
 
 			if (upType == 3) {
@@ -720,9 +693,10 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 			//checkUsageCorrectness();
 
 			//getOverflow2Dmaze(&maxOverflow , & tUsage); 
-
-			printf("iteration %d, enlarge %d, costheight %d, threshold %d via cost %d \nlog_coef %f, healingTrigger %d cost_step %d slope %d L %f cost_type %d updatetype %d OBIM delta %d\n",
-				i,enlarge,costheight,mazeedge_Threshold, VIA,LOGIS_COF, healingTrigger, cost_step, slope, L ,cost_type, upType, max(OBIM_delta, (int)(costheight / (2*slope))));
+			if(verbose_ > none) {
+				printf("iteration %d, enlarge %d, costheight %d, threshold %d via cost %d \nlog_coef %f, healingTrigger %d cost_step %d slope %d L %f cost_type %d updatetype %d OBIM delta %d\n",
+					i,enlarge,costheight,mazeedge_Threshold, VIA,LOGIS_COF, healingTrigger, cost_step, slope, L ,cost_type, upType, max(OBIM_delta, (int)(costheight / (2*slope))));
+			}
 			//L = 2; 
 			roundtimer.start();
 			//galois::runtime::profileVtune( [&] (void) {
@@ -748,7 +722,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 							int i2 = (i - i1 * len) / len_parts;
 							vecParts[i2].push_back(i);
 						}
-						std::cout << "parts: " << parts << std::endl;
+						if(verbose_ > none)
+							std::cout << "parts: " << parts << std::endl;
 					
 						/*mazeRouteMSMDDetPart(i, enlarge, costheight, ripup_threshold,
 											mazeedge_Threshold, false , cost_type, parts,
@@ -766,7 +741,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 							int i2 = (i - i1 * len) / len_parts;
 							vecParts[i2].push_back(i);
 						}
-						std::cout << "parts: " << parts << std::endl;
+						if(verbose_ > none)
+							std::cout << "parts: " << parts << std::endl;
 					
 						/*mazeRouteMSMDDetPart_Astar(i, enlarge, costheight, ripup_threshold,
 											mazeedge_Threshold, false, cost_type, parts,
@@ -782,7 +758,9 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 							nets_per_part = max_nets_per_part;
 						else
 							nets_per_part = max(2, (numValidNets - acc_count) / parts + 1);
-						cout << "nets_per_part: "  << nets_per_part << endl;
+						
+						if(verbose_ > none)
+							cout << "nets_per_part: "  << nets_per_part << endl;
 						std::vector<int> part;
 						
 						std::vector<std::vector<int>> vecParts;
@@ -803,7 +781,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 						
 						if(part.size() != 0)
 							vecParts.push_back(part);
-						std::cout << "parts: " << vecParts.size() << std::endl;
+						if(verbose_ > none)
+							std::cout << "parts: " << vecParts.size() << std::endl;
 					
 						/*mazeRouteMSMDDetPart_Astar_Data(i, enlarge, costheight, ripup_threshold,
 											mazeedge_Threshold, false, cost_type, vecParts.size(),
@@ -821,7 +800,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 							nets_per_part = max(8, (numValidNets - acc_count) / parts + 1);
 
 						int counted_num_part = (numValidNets - acc_count) / nets_per_part + 1;
-						cout << "avg nets_per_part: "  << nets_per_part << " counted parts: " << counted_num_part << endl;
+						if(verbose_ > none)
+							cout << "avg nets_per_part: "  << nets_per_part << " counted parts: " << counted_num_part << endl;
 						std::vector<int> part;
 						
 						std::vector<std::vector<int>> vecParts;
@@ -862,7 +842,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 						
 						if(part.size() != 0)
 							vecParts.push_back(part);
-						std::cout << "parts: " << vecParts.size() << std::endl;
+						if(verbose_ > none)
+							std::cout << "parts: " << vecParts.size() << std::endl;
 					
 						mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
 											mazeedge_Threshold, false, cost_type, vecParts.size(),
@@ -916,8 +897,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 								}
 							}
 						}*/
-						
-						std::cout << "parts: " << vecParts.size() << std::endl;
+						if(verbose_ > none)
+							std::cout << "parts: " << vecParts.size() << std::endl;
 					
 						/*mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
 											mazeedge_Threshold, false, cost_type, vecParts.size(),
@@ -937,7 +918,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 				
 			//}, "mazeroute");
 			roundtimer.stop();
-			cout << "round : " << i << " time(ms): " << roundtimer.get() - oldtime << " acc time(ms): " << roundtimer.get() << " scheduling time: " << rudytimer.get()<< endl;
+			if(verbose_ > none)
+				cout << "round : " << i << " time(ms): " << roundtimer.get() - oldtime << " acc time(ms): " << roundtimer.get() << " scheduling time: " << rudytimer.get()<< endl;
 			oldtime = roundtimer.get();
 			//checkUsageCorrectness();
             last_cong = past_cong;
@@ -968,8 +950,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 				}
 			}
 
-			
-			cout << "nthreads :" <<	numThreads << endl;
+			if(verbose_ > none)
+				cout << "nthreads :" <<	numThreads << endl;
 			extrarun = false;
 
 			if (minofl > past_cong) {
@@ -1046,18 +1028,21 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
 		checkUsage();
 
+		if(verbose_ > none)
 		printf("maze routing finished\n");
          
 		t4 = clock();
 		maze_Time = (float)(t4-t3)/CLOCKS_PER_SEC;
 		//printf("P3 runtime: %f sec\n", maze_Time);
-
-		printf("Final 2D results: \n");
+		if(verbose_ > none)
+			printf("Final 2D results: \n");
 		getOverflow2Dmaze( &maxOverflow , & tUsage);
 
-		printf("\nLayer Assignment Begins");
+		if(verbose_ > none)
+			printf("\nLayer Assignment Begins");
 		newLA ();
-		printf("layer assignment finished\n");
+		if(verbose_ > none)
+			printf("layer assignment finished\n");
 
 		t2 = clock();
 		gen_brk_Time = (float)(t2-t1)/CLOCKS_PER_SEC;
@@ -1077,14 +1062,16 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 		
 
 		if (goingLV && past_cong == 0) {
-			printf("Post Processing Begins \n");
+			if(verbose_ > none)
+				printf("Post Processing Begins \n");
 			//mazeRouteMSMDOrder3D(enlarge, 0, ripupTH3D );
 			
 		//	mazeRouteMSMDOrder3D(enlarge, 0, 10 );
 			if (gen_brk_Time > 120) {
 				//mazeRouteMSMDOrder3D(enlarge, 0, 12 );
 			}
-			printf("Post Processsing finished, starting via filling\n");			
+			if(verbose_ > none)
+				printf("Post Processsing finished, starting via filling\n");			
 
 		}
 		
@@ -1105,9 +1092,11 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
 	t4 = clock();
 	maze_Time = (float)(t4-t1)/CLOCKS_PER_SEC;
-	printf("Final routing length : %d\n",finallength);
-	printf("Final number of via  : %d\n",numVia);
-	printf("Final total length 1 : %d\n\n",finallength+numVia);
+	if(verbose_ > none) {
+		printf("Final routing length : %d\n",finallength);
+		printf("Final number of via  : %d\n",numVia);
+		printf("Final total length 1 : %d\n\n",finallength+numVia);
+	}
     	
     //printf("Final total length 3 : %d\n",(finallength+3*numVia));
 	//printf("3D runtime: %f sec\n", maze_Time);

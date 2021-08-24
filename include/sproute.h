@@ -7,6 +7,7 @@
 #include "grGen.h"
 #include "algo.h"
 #include "maze.h"
+#include "verbose.h"
 
 #include "galois/LargeArray.h"
 #include <phydb/phydb.h> 
@@ -28,6 +29,8 @@ private:
     int acc_count;
     int numThreads;
     int max_iteration;
+
+    int verbose_ = 0;
 
     void LinkTrackToLayer();
     void PreprocessSpacingTable();
@@ -103,6 +106,17 @@ private:
     void UndoneFilter(galois::LargeArray<bool> &done);
     void RUDY_scheduler(int iter, int max_overflow, int counted_num_part, std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done);
 
+    void gen_brk_RSMT(bool congestionDriven, bool reRoute, bool genTree, bool newType, bool noADJ);
+    int getOverflow2D(int* maxOverflow);
+    int getOverflow2Dmaze(int* maxOverflow, int* tUsage, bool after_maze = false);
+    int getOverflow3D();
+    void copyBR();
+    void fillVIA();
+    void newLA();
+    void checkUsage();
+    void updateCongestionHistory(int upType);
+    void routeLVAll(int threshold, int expand);
+
 public:
     ~SPRoute() {}
     SPRoute() {
@@ -114,6 +128,7 @@ public:
         galois::preAlloc(numThreads * 2);
         galois::setActiveThreads(numThreads);
     }
+
     SPRoute(phydb::PhyDB* p) {
         this->LoadPhyDB(p);
         acc_count = 0;
@@ -124,6 +139,19 @@ public:
         galois::preAlloc(numThreads * 2);
         galois::setActiveThreads(numThreads);
     }
+
+    SPRoute(phydb::PhyDB* p, int v) {
+        this->LoadPhyDB(p);
+        acc_count = 0;
+        max_iteration = 30;
+        numThreads = 1;
+        algo = NonDet;
+        verbose_ = v;
+
+        galois::preAlloc(numThreads * 2);
+        galois::setActiveThreads(numThreads);
+    }
+
     SPRoute(phydb::PhyDB* p, int numT, std::string algo_str) {
         this->LoadPhyDB(p);
         acc_count = 0;
