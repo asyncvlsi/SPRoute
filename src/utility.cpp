@@ -912,7 +912,7 @@ void assignEdge(int netID, int edgeID, bool processDIR)
 	
 }
 
-void newLayerAssignmentV4() 
+void SPRoute::newLayerAssignmentV4() 
 {
 	bool assigned, inOne, BIdir;
 	short *gridsX, *gridsY, *gridsL;
@@ -962,7 +962,7 @@ void newLayerAssignmentV4()
 		quehead = quetail = 0;
 		numNodes = 2*deg-2;
 
-		if(deg > 1000)
+		if(verbose_ > none && deg > 1000)
 			cout << "LA large net" << endl;
 
 		for (nodeID = 0; nodeID < deg; nodeID ++) {
@@ -1093,7 +1093,7 @@ void newLayerAssignmentV4()
 			}//edge len > 0
 		} // eunmerating edges 
 
-		if(deg > 1000)
+		if(verbose_ > none && deg > 1000)
 			cout << "LA large net finished" << endl;
 
 	}

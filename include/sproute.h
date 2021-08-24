@@ -113,6 +113,7 @@ private:
     void copyBR();
     void fillVIA();
     void newLA();
+    void newLayerAssignmentV();
     void checkUsage();
     void updateCongestionHistory(int upType);
     void routeLVAll(int threshold, int expand);
