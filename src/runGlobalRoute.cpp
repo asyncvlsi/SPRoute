@@ -1464,5 +1464,13 @@ void SPRoute::WriteGuideToPhydb() {
 }
 
 
+void SPRoute::WriteGcellGridToPhydb() {
+	auto design_p = db_ptr_->GetDesignPtr();
+
+	for(auto gcellgrid : defDB.gcellGrids) {
+		design_p->AddGcellGrid(phydb::StrToXYDirection(gcellgrid.direction), gcellgrid.start, gcellgrid.numBoundaries, gcellgrid.step);
+	}
+}
+
 
 } //namespace sproute

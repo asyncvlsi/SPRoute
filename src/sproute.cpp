@@ -597,6 +597,8 @@ void SPRoute::UpdateGcellGrid(int xtrack_step, int ytrack_step)
 
     defDB.gcellGrids.push_back(tmpGcellGrid_y);
     defDB.gcellGrids.push_back(tmpGcellGrid_y1);
+
+    WriteGcellGridToPhydb();
 };
 
 void SPRoute::GenerateGcellGrid()

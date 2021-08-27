@@ -73,6 +73,7 @@ private:
     void LoadPhyDBGcellGrids();
 
     void WriteGuideToPhydb();
+    void WriteGcellGridToPhydb();
     void WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Point3D<int>>& routedGrid);
 
     void WriteGuideToFile(string guideFileName);
@@ -113,7 +114,7 @@ private:
     void copyBR();
     void fillVIA();
     void newLA();
-    void newLayerAssignmentV();
+    void newLayerAssignmentV4();
     void checkUsage();
     void updateCongestionHistory(int upType);
     void routeLVAll(int threshold, int expand);
