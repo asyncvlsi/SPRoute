@@ -109,6 +109,8 @@ typedef struct {
 
   int n_ripups;
   bool ripup;
+  double res;
+  double cap;
 } TreeEdge;
 
 typedef struct {

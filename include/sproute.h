@@ -116,6 +116,7 @@ private:
     void newLA();
     void newLayerAssignmentV4();
     void checkUsage();
+    void RCEstimate();
     void updateCongestionHistory(int upType);
     void routeLVAll(int threshold, int expand);
 

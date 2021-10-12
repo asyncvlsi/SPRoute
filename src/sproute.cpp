@@ -347,6 +347,7 @@ void SPRoute::LoadPhyDBSNets() {
 
 void SPRoute::LoadPhyDBNets() {
     auto phydb_nets = db_ptr_->GetDesignPtr()->GetNetsRef();
+    auto phydb_comps = db_ptr_->GetDesignPtr()->GetComponentsRef();
 
     for(auto phydb_net : phydb_nets) {
         int idx = defDB.nets.size();
@@ -355,8 +356,7 @@ void SPRoute::LoadPhyDBNets() {
         tmpNet.name = phydb_net.GetName();
         tmpNet.use = phydb::SignalUse(phydb_net.use_);
 
-        auto phydb_component_names = phydb_net.GetComponentNamesRef();
-        auto phydb_pin_names = phydb_net.GetPinNamesRef();
+        auto phydb_pins_ref = phydb_net.GetPinsRef();
         auto phydb_iopin_names = phydb_net.GetIoPinNamesRef();
 
         for(auto phydb_iopin_name : phydb_iopin_names) {
@@ -364,9 +364,13 @@ void SPRoute::LoadPhyDBNets() {
             tmpNet.pinNames.push_back(phydb_iopin_name);
         }
 
-        for(int i = 0; i < phydb_component_names.size(); i++) {
-            tmpNet.componentNames.push_back(phydb_component_names[i]);
-            tmpNet.pinNames.push_back(phydb_pin_names[i]);
+        for(int i = 0; i < phydb_pins_ref.size(); i++) {
+            auto& comp = phydb_comps[phydb_pins_ref[i].comp_id];
+            std::string comp_name = comp.GetName();
+            int pin_id = phydb_pins_ref[i].pin_id;
+            std::string pin_name = comp.GetMacro()->GetPinsRef()[pin_id].GetName();
+            tmpNet.componentNames.push_back(comp_name);
+            tmpNet.pinNames.push_back(pin_name);
         }
 
         defDB.nets.push_back(tmpNet);
@@ -1398,10 +1402,10 @@ void SPRoute::InitGrGen() {
 								int trackStep = defDB.tracks.at(trackIdx).step;
 								for(sproute_db::Rect2D<float>& rect: layerRect.rects)
 								{
-									int xmin = sproute_db::find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
-            						int ymin = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
-            						int xmax = sproute_db::find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
-            						int ymax = sproute_db::find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
+									int xmin = sproute_db::find_Gcell(rect.lowerLeft.x, defDB.xGcellBoundaries);
+            						int ymin = sproute_db::find_Gcell(rect.lowerLeft.y, defDB.yGcellBoundaries);
+            						int xmax = sproute_db::find_Gcell(rect.upperRight.x, defDB.xGcellBoundaries);
+            						int ymax = sproute_db::find_Gcell(rect.upperRight.y, defDB.yGcellBoundaries);
 
                                     xmin = (xmin < 0)? 0 : xmin;
                                     ymin = (ymin < 0)? 0 : ymin;
@@ -1433,7 +1437,74 @@ void SPRoute::InitGrGen() {
 		    std::cout << "numnets: " << grGen.numNets << endl;
 }
 
+/*void SPRoute::TreeBFS(int netID, int* BFS_dist) {
+    std::queue<int> worklist;
+    TreeNode* treenodes = sttrees[netID].nodes;
+    int deg = sttrees[netID].deg;
+    int nedges = 2 * deg - 3;
+    int 
+    worklist.push(0);
+    while(!worklist.empty()) {
+        int nodeID = worklist.front();
+        worklist.pop();
+        short* nbr_edges = treenodes[nodeID].edge;
+        for(int i = 0; i < 3; i++) { //at most 3 edges
+            if(nbr_edges[i] >= 0 && nbr_edges[i] < nedges) {
+                int nbr = treenodes[nodeID].nbr[i];
+                if(BFS_dist[nbr] > BFS_dist[nodeID]) {
+                    BFS_dist[nbr] = BFS_dist[nodeID] + 1;
+                    worklist.push(nbr);
+                }
+            }
+        }
+    }
+}
 
+void SPRoute::RCEstimate() {
+
+    for(int netID = 0; netID < numValidNets; netID++) {
+        TreeNode* treenodes = sttrees[netID].nodes;
+		int deg = sttrees[netID].deg;
+        int* BFS_dist = new int [deg];
+        for(int i = 0; i < deg; i++)
+            BFS_dist = 0;
+        TreeBFS(netID, BFS_dist);
+
+        for(int edgeID = 0; edgeID < 2*sttrees[netID].deg - 3; edgeID++) {
+			if (sttrees[netID].edges[edgeID].len == 0) {
+				continue;
+			}
+            TreeEdge* treeedge = &(sttrees[netID].edges[edgeID]);
+            int edgelength = treeedge->route.routelen;
+            int n1 = treeedge->n1;
+            int n2 = treeedge->n2;
+            short* gridsX = treeedge->route.gridsX;
+            short* gridsY = treeedge->route.gridsY;
+			short* gridsL = treeedge->route.gridsL;
+            
+            vector<double> R;
+            vector<double> C;
+            int seg_length = 0;
+            int prev_layer = 0;
+            if(BFS_dist[n1] < BFS_dist[n2]) {
+			    for(int i = 0; i <= edgelength; i++) {
+
+                }
+            }
+            else if(BFS_dist[n1] > BFS_dist[n2]) {
+                for(int i = edgelength; i >= 0; i--) {
+
+                }
+            }
+            else {
+                cout << "error in BFS_dist in RCEstimate" << endl;
+                exit(1);
+            }
+        }
+
+        delete[] BFS_dist;
+    }
+}*/
 
 void SPRoute::ComputePinLocation(sproute_db::Component& component)
 {

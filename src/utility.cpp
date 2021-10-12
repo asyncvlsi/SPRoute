@@ -65,8 +65,8 @@ void plotTree(int netID)
         
     for(i=0; i<sttrees[netID].deg*2-3; i++)
     {
-if(1)//i!=14)
-{
+		if(1)//i!=14)
+		{
         treeedge = &(sttrees[netID].edges[i]);
         
         n1 = treeedge->n1;
@@ -171,7 +171,6 @@ void ConvertToFull3DType2 ()
 
 	numVIA = 0;
 	
-
 	for(netID=0;netID<numValidNets;netID++)
 	{
 		treeedges=sttrees[netID].edges;
@@ -182,7 +181,6 @@ void ConvertToFull3DType2 ()
 		{
 			treeedge = &(treeedges[edgeID]);
 			if (treeedge->len > 0) {
-
 				newCNT = 0;
 				routeLen =  treeedge->route.routelen;
 //				printf("netID %d, edgeID %d, len %d\n",netID, edgeID, routeLen);
@@ -1025,17 +1023,14 @@ void SPRoute::newLayerAssignmentV4()
 			treenodes[nodeID].status = 0;
 			treenodes[nodeID].assigned = false;
 
-
 			if(nodeID<deg)
 			{
-				
 				//treenodes[nodeID].botL = 0;
 				treenodes[nodeID].topL = treenodes[nodeID].layer;
 				treenodes[nodeID].botL = treenodes[nodeID].layer;
 				treenodes[nodeID].assigned = true;
 				treenodes[nodeID].status = 1;
 			}
-
 		}
 
 		for (edgeID = 0; edgeID < 2*deg-3; edgeID++) {
@@ -1043,9 +1038,7 @@ void SPRoute::newLayerAssignmentV4()
 			treeedge = &(treeedges[edgeID]);
 
 			if (treeedge->len > 0) {
-
 				routeLen = treeedge->route.routelen;
-
 				n1 = treeedge->n1;
 				n2 = treeedge->n2;
 				gridsL = treeedge->route.gridsL;
@@ -1097,8 +1090,6 @@ void SPRoute::newLayerAssignmentV4()
 			cout << "LA large net finished" << endl;
 
 	}
-
-	//printf("sum check number 2 %d\n",sumcheck);
 }
 
 
@@ -1117,7 +1108,7 @@ int findLayer(int netID, TreeNode treenode)
 	exit(1);
 }
 
-void SPRoute::newLA ()
+void SPRoute::newLA()
 {
 	int netID, i,d, k, edgeID,nodeID,deg, numpoints, n1, n2, corN,  tmpX[MAXLEN], tmpY[MAXLEN],*gridsX,*gridsY,*gridsL, tmpL[MAXLEN], routeLen, n1a, n2a;;
 	int n1x, n1y, n1l, n2x, n2y, n2l,  grid, numError, preH, preV, min_y, min_x,connectionCNT;
@@ -1173,7 +1164,6 @@ void SPRoute::newLA ()
 					if((treenodes[d].x==xcor[k])&&(treenodes[d].y==ycor[k]))
 					{
 						treenodes[d].stackAlias = dcor[k];
-						
 						redundant=true;
 						break;
 					}

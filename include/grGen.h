@@ -220,7 +220,6 @@ public:
 		//for(auto net : defDB.nets)   //TODO: This should be parallelized
 		//{
  
-			cout << "enters here? " << endl;
      galois::do_all(
 		 	galois::iterate((uint32_t) 0, (uint32_t)numNets),
 				[&](uint32_t idx) {
@@ -278,17 +277,15 @@ public:
 								int trackStep = defDB.tracks.at(trackIdx).step;
 								for(auto rect: layerRects.rects)
 								{
-									int xmin = find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
-            						int ymin = find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
-            						int xmax = find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
-            						int ymax = find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
+									int xmin = find_Gcell(rect.lowerLeft.x, defDB.xGcellBoundaries);
+            						int ymin = find_Gcell(rect.lowerLeft.y, defDB.yGcellBoundaries);
+            						int xmax = find_Gcell(rect.upperRight.x, defDB.xGcellBoundaries);
+            						int ymax = find_Gcell(rect.upperRight.y, defDB.yGcellBoundaries);
 
                                     xmin = (xmin < 0)? 0 : xmin;
                                     ymin = (ymin < 0)? 0 : ymin;
                                     xmax = (xmax >= grid.x)? grid.x - 1: xmax;
                                     ymax = (ymax >= grid.y)? grid.y - 1: ymax;
-            						//if(xmin != xmax || ymin != ymax)
-            						//	cout << "Pin covers two gcells: " << net.name << " " << component.name << "/" << pin.name << endl;
 
 									for(int pinRegionx = xmin; pinRegionx <= xmax; pinRegionx++)
 									{

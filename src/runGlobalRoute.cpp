@@ -1040,7 +1040,8 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 
 		if(verbose_ > none)
 			printf("\nLayer Assignment Begins");
-		newLA ();
+
+		newLA();
 		if(verbose_ > none)
 			printf("layer assignment finished\n");
 
@@ -1066,7 +1067,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 				printf("Post Processing Begins \n");
 			//mazeRouteMSMDOrder3D(enlarge, 0, ripupTH3D );
 			
-		//	mazeRouteMSMDOrder3D(enlarge, 0, 10 );
+			//	mazeRouteMSMDOrder3D(enlarge, 0, 10 );
 			if (gen_brk_Time > 120) {
 				//mazeRouteMSMDOrder3D(enlarge, 0, 12 );
 			}
@@ -1079,6 +1080,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 		finallength = getOverflow3D();
 		numVia= threeDVIA ();
 		checkRoute3D();
+		//RCEstimate();
 		//printUndone(done);
 		WriteGuideToPhydb();
 		/*if (needOUTPUT) {
