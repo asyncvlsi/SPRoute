@@ -7,45 +7,60 @@ set(CMAKE_CXX_STANDARD 17)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake/Modules")
 
-######################################
-# detect the installation path of LEF parser and DEF parser,
+############################################################################
+# Detect the installation path of LEF parser and DEF parser,
 # and check if the liblef and libdef library can be found or not
-######################################
+############################################################################
 message(STATUS "Detecting environment variable LEF_ROOT...")
+set(LEF_ROOT "")
 if (DEFINED ENV{LEF_ROOT})
     message(STATUS "Environment variable LEF_ROOT detected: " $ENV{LEF_ROOT})
+    include_directories($ENV{LEF_ROOT}/include)
+    link_directories($ENV{LEF_ROOT}/lib)
+    set(LEF_ROOT $ENV{LEF_ROOT})
 else ()
-    message(FATAL_ERROR "Environment variable LEF_ROOT not found")
+    message(STATUS "Environment variable LEF_ROOT not found, using ACT_HOME instead")
+    include_directories($ENV{ACT_HOME}/include)
+    link_directories($ENV{ACT_HOME}/lib)
+    set(LEF_ROOT $ENV{ACT_HOME})
 endif ()
-include_directories($ENV{LEF_ROOT}/include)
-link_directories($ENV{LEF_ROOT}/lib)
-find_library(LEF_LIBRARY
+find_library(
+    LEF_LIBRARY
     NAMES lef
-    PATHS $ENV{LEF_ROOT}/lib
-    REQUIRED)
+    PATHS ${LEF_ROOT}/lib
+    REQUIRED
+)
 if (NOT LEF_LIBRARY)
-    message(FATAL_ERROR "liblef.a is not found")
+    message(FATAL_ERROR "Cannot find liblef.a")
 else ()
-    message(STATUS "liblef.a found")
-endif()
+    message(STATUS "Found liblef.a: " ${LEF_LIBRARY})
+endif ()
 
 message(STATUS "Detecting environment variable DEF_ROOT...")
+set(DEF_ROOT "")
 if (DEFINED ENV{DEF_ROOT})
     message(STATUS "Environment variable DEF_ROOT detected: " $ENV{DEF_ROOT})
+    include_directories($ENV{DEF_ROOT}/include)
+    link_directories($ENV{DEF_ROOT}/lib)
+    set(DEF_ROOT $ENV{DEF_ROOT})
 else ()
-    message(FATAL_ERROR "Environment variable DEF_ROOT not found")
+    message(STATUS "Environment variable DEF_ROOT not found, using ACT_HOME instead")
+    include_directories($ENV{ACT_HOME}/include)
+    link_directories($ENV{ACT_HOME}/lib)
+    set(DEF_ROOT $ENV{ACT_HOME})
 endif ()
-include_directories($ENV{DEF_ROOT}/include)
-link_directories($ENV{DEF_ROOT}/lib)
-find_library(DEF_LIBRARY
+find_library(
+    DEF_LIBRARY
     NAMES def
-    PATHS $ENV{DEF_ROOT}/lib
-    REQUIRED)
+    PATHS ${DEF_ROOT}/lib
+    REQUIRED
+)
 if (NOT DEF_LIBRARY)
-    message(FATAL_ERROR "libdef.a is not found")
+    message(FATAL_ERROR "Cannot find libdef.a")
 else ()
-    message(STATUS "libdef.a found")
-endif()
+    message(STATUS "Found libdef.a: " ${DEF_LIBRARY})
+endif ()
+
 
 
 if(GALOIS_ENABLE_VTUNE)
