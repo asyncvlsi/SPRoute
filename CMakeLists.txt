@@ -105,7 +105,7 @@ else ()
     message(STATUS "libgalois_shmem.a found")
 endif()
 
-find_package(Boost 1.69.0 REQUIRED)
+find_package(Boost 1.71.0 REQUIRED)
 message(STATUS "Boost library path: ${Boost_LIBRARY_DIRS}")
 message(STATUS "Boost include path: ${Boost_INCLUDE_DIR}")
 message(STATUS "Boost libs: ${Boost_LIBRARIES}")

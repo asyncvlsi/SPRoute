@@ -322,7 +322,7 @@ void SPRoute::LoadPhyDBSNets() {
         sproute_db::SNet tmpSNet;
 
         tmpSNet.name = phydb_snet.GetName();
-        auto phydb_paths = phydb_snet.GetPathRef();
+        auto phydb_paths = phydb_snet.GetPathsRef();
         for(auto phydb_path : phydb_paths) {
             sproute_db::Path tmpPath;
             
@@ -330,13 +330,23 @@ void SPRoute::LoadPhyDBSNets() {
             tmpPath.width = phydb_path.GetWidth();
             tmpPath.shape = phydb_path.GetShape();
             tmpPath.viaName = phydb_path.GetViaName();
-            tmpPath.beginExt = phydb_path.GetBeginExt();
-            tmpPath.endExt = phydb_path.GetEndExt();
+            if(phydb_path.GetRoutingPointsRef().size() > 1) {
+                tmpPath.beginExt = phydb_path.GetRoutingPointsRef()[0].z;
+                tmpPath.begin.x = phydb_path.GetRoutingPointsRef()[0].x;
+                tmpPath.begin.y = phydb_path.GetRoutingPointsRef()[0].y;
+
+                tmpPath.endExt = phydb_path.GetRoutingPointsRef()[1].z;
+                tmpPath.end.x = phydb_path.GetRoutingPointsRef()[1].x;
+                tmpPath.end.y = phydb_path.GetRoutingPointsRef()[1].y;
+            }
+            else {
+                tmpPath.beginExt = phydb_path.GetRoutingPointsRef()[0].z;
+                tmpPath.begin.x = phydb_path.GetRoutingPointsRef()[0].x;
+                tmpPath.begin.y = phydb_path.GetRoutingPointsRef()[0].y;
+            }
+
             tmpPath.rect.set(phydb_path.GetRect().LLX(), phydb_path.GetRect().LLX(), phydb_path.GetRect().LLX(), phydb_path.GetRect().LLX());
-            tmpPath.begin.x = phydb_path.GetBegin().x;
-            tmpPath.begin.y = phydb_path.GetBegin().y;
-            tmpPath.end.x = phydb_path.GetEnd().x;
-            tmpPath.end.y = phydb_path.GetEnd().y;
+            
 
             tmpSNet.paths.push_back(tmpPath);
         }
