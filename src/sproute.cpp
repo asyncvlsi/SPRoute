@@ -617,7 +617,7 @@ void SPRoute::UpdateGcellGrid(int xtrack_step, int ytrack_step)
 
 void SPRoute::GenerateGcellGrid()
 {
-    int xtrack_step = 0, ytrack_step = 0;
+    int xtrack_step = 1000000, ytrack_step = 1000000;
     string routing_layer_name;
     for(auto layer : lefDB.layers)
     {
@@ -632,13 +632,12 @@ void SPRoute::GenerateGcellGrid()
                 for(auto layerName : track.layerNames)
                 {
                     if(layerName == layer.name && track.direction == "Y")
-                        ytrack_step = track.step;
+                        ytrack_step = std::min(ytrack_step, track.step);
 
                     if(layerName == layer.name && track.direction == "X")
-                        xtrack_step = track.step;
+                        xtrack_step = std::min(xtrack_step, track.step);
                 }
             }
-            break;
         }
     }
     if(verbose_ > none) {
@@ -1166,7 +1165,9 @@ void SPRoute::GcellInsertOBS(int x, int y, int z, sproute_db::Rect2D<int> rect, 
         gcell.numTracks = gcellTrackEnd - gcellTrackStart + 1;
         if(gcell.numTracks > 15) {
             cout << "numtracks more than 15? " << gcell.numTracks << endl;
-            exit(1);
+            cout << "INFO: direction: " << direction << " gcell lower: " << gcellLower << " gcell upper: " << gcellUpper << endl;
+	    cout << "track start : " << trackStart << " step: " << trackStep << endl;
+	    exit(1);
         }
         for(int i = 0; i < gcell.numTracks; i++)
         {
