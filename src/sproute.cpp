@@ -300,7 +300,7 @@ void SPRoute::LoadPhyDBIOPins() {
         tmpIOPin.name = phydb_iopin.GetName();
         tmpIOPin.netName = phydb_iopin.GetNetName();
         tmpIOPin.direction = phydb::SignalDirectionStr(phydb_iopin.GetDirection());
-        tmpIOPin.use = phydb::SignalUse(phydb_iopin.GetUse());
+        tmpIOPin.use = phydb::SignalUseStr(phydb_iopin.GetUse());
         tmpIOPin.layerName = phydb_iopin.GetLayerName();
 
         tmpIOPin.rect.set(phydb_iopin.GetRect().LLX(), phydb_iopin.GetRect().LLY(), phydb_iopin.GetRect().URX(), phydb_iopin.GetRect().URY());
@@ -364,7 +364,7 @@ void SPRoute::LoadPhyDBNets() {
         sproute_db::Net tmpNet;
 
         tmpNet.name = phydb_net.GetName();
-        tmpNet.use = phydb::SignalUse(phydb_net.use_);
+        tmpNet.use = phydb::SignalUseStr(phydb_net.use_);
 
         auto phydb_pins_ref = phydb_net.GetPinsRef();
         auto phydb_iopin_names = phydb_net.GetIoPinNamesRef();
