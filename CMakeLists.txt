@@ -95,15 +95,47 @@ else ()
     message(STATUS "libphydb.a found")
 endif()
 
-find_library(GALOIS_SHMEM
+message(STATUS "Detecting Galois libraries...")
+set(Galois_FOUND TRUE)
+find_library(
+    GALOIS_EDA_LIBRARY
+    NAMES galois_eda
+    PATHS $ENV{ACT_HOME}/lib
+)
+if (GALOIS_EDA_LIBRARY)
+    set(Galois_LIBRARIES ${GALOIS_EDA_LIBRARY})
+    message(STATUS "Found libgalois_eda.a: " ${GALOIS_EDA_LIBRARY})
+else()
+    message(STATUS "Cannot find libgalois_eda.a")
+    set(Galois_FOUND FALSE)
+endif()
+find_library(
+    GALOIS_SHMEM_LIBRARY
     NAMES galois_shmem
     PATHS $ENV{ACT_HOME}/lib
-    REQUIRED)
-if (NOT GALOIS_SHMEM)
-    message(FATAL_ERROR "libgalois_shmem.a is not found")
-else ()
-    message(STATUS "libgalois_shmem.a found")
+)
+if (GALOIS_SHMEM_LIBRARY)
+    set(Galois_LIBRARIES ${Galois_LIBRARIES} ${GALOIS_SHMEM_LIBRARY})
+    message(STATUS "Found libgalois_shmem.a: " ${GALOIS_SHMEM_LIBRARY})
+else()
+    message(STATUS "Cannot find libgalois_shmem.a")
+    set(Galois_FOUND FALSE)
 endif()
+
+if (UNIX AND (NOT APPLE))
+    find_library(
+        NUMA_LIBRARY
+        NAMES numa
+    )
+    if (NUMA_LIBRARY)
+        set(Galois_LIBRARIES ${Galois_LIBRARIES} ${NUMA_LIBRARY})
+        message(STATUS "Found libnuma: " ${NUMA_LIBRARY})
+    else()
+        message(STATUS "Cannot find libnuma")
+        set(Galois_FOUND FALSE)
+    endif()
+endif()
+
 
 find_package(Boost 1.71.0 REQUIRED)
 message(STATUS "Boost library path: ${Boost_LIBRARY_DIRS}")
