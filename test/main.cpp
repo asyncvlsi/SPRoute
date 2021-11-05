@@ -49,30 +49,9 @@ int main(int argc, char** argv)
     db.ReadDef(defFileName);
     cout << "reading lef/def done" << endl;
 
-    sproute::SPRoute sproute(&db, 1, "NonDet");
-    /*sproute.numThreads = numThreads;
-    sproute.LoadPhyDB(&db);
-    sproute.LinkTrackToLayer();
-    sproute.PreprocessSpacingTable(); 
-    
-    sproute.PreprocessComponent(); 
-    sproute.InitGcell();
-    
-    sproute.PreprocessSNet();
-    sproute.PreprocessDesignRule();
-    sproute.PreprocessDesignRuleOBS();
-    sproute.AdjustGcellCap();
-
-    sproute.InitGrGen();
-
-    sproute.algo = sproute::StrToAlgo(algo_str);
-    cout << "running algorithm: " << algo_str << endl;
-    
-    sproute.RunGlobalRoute(outFileName, 30, sproute.algo);*/
+    sproute::SPRoute sproute(&db, 1, algo_str);
 
     sproute.Run();
-
-    //sproute.WriteGuideToFile("integration_correct.guide");
 
     db.WriteGuide("integration_test.guide");
 

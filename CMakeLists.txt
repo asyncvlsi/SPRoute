@@ -146,10 +146,18 @@ add_library(sproute
 target_link_libraries(sproute 
     lef def galois_shmem pthread phydb)
 
-#add_executable(lefdef-sproute
-#    test/main.cpp)
-#target_link_libraries(lefdef-sproute
-#    lef def galois_shmem sproute pthread phydb)
+if(BUILD_BIN)
+    add_executable(SPRoute
+        test/main.cpp)
+    target_link_libraries(SPRoute
+        lef 
+        def 
+        sproute 
+        pthread 
+        phydb
+        ${Galois_LIBRARIES}
+        )
+endif()
 
 ######################################
 # specify the installation directory: ${ACT_HOME}

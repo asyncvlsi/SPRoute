@@ -25,6 +25,7 @@
     $ cmake ..
     $ make
     $ make install
+ If you want an executable of SPRoute, run "cmake .. -DBUILD_BIN=1" in the cmake step.
  "make install" creates a folder `sproute` under folder `$ACT_HOME/include` with all .h of PWRoute/include, and a static library `libsproute.a` under folder `$ACT_HOME/lib`.
 
 
