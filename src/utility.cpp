@@ -1346,7 +1346,7 @@ void write3D()
 
 	for(netID=0;netID<numValidNets;netID++)
 	{
-		fprintf(fp, "%s %d\n", nets[netID]->name, netID);
+		fprintf(fp, "%s %d\n", nets[netID]->name.c_str(), netID);
 		treeedges=sttrees[netID].edges;
 		deg=sttrees[netID].deg;
 		
@@ -1566,7 +1566,7 @@ void SPRoute::checkUsage()
 								}
 								treeedge->route.routelen -= i-j;
 								redsus = true;
-								printf("redundant edge component discovered: netID: %d name: %s edgeid: %d ", netID, nets[netID]->name, edgeID);
+								printf("redundant edge component discovered: netID: %d name: %s edgeid: %d ", netID, nets[netID]->name.c_str(), edgeID);
 								printf(" x: %d y: %d %d %d\n", gridsX[i], gridsY[i], i, j);
 								i = 0;
 								j=0;
@@ -1698,7 +1698,7 @@ bool checkRoute2DTree(int netID)
 				distance = ADIFF(gridsX[i+1],gridsX[i]) + ADIFF(gridsY[i+1],gridsY[i]) ;
 				if(distance != 1)
 				{
-					printf("net[%d] netname: %s edge[%d] maze route wrong, distance %d, i %d\n", netID, nets[netID]->name, edgeID,distance,i);
+					printf("net[%d] netname: %s edge[%d] maze route wrong, distance %d, i %d\n", netID, nets[netID]->name.c_str(), edgeID,distance,i);
 					gridFlag = true;
 					STHwrong = true;
 				}

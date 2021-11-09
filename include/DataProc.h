@@ -4,7 +4,7 @@
 namespace sproute {
 
 #define BUFFERSIZE 800
-#define STRINGLEN 100
+#define STRINGLEN 200
 #define MAXNETDEG 5000
 
 #define MAXLEN 20000

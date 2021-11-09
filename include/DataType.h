@@ -25,7 +25,7 @@ typedef struct {
 } Segment;              // A Segment is a 2-pin connection
 
 typedef struct {
-  char name[30]; // net name
+  std::string name; // net name
   int netIDorg;  // orginal net ID in the input file
   short numPins; // number of pins in the net
   short deg; // net degree (number of MazePoints connecting by the net, pins in

@@ -364,7 +364,7 @@ void SPRoute::LoadPhyDBNets() {
         sproute_db::Net tmpNet;
 
         tmpNet.name = phydb_net.GetName();
-        tmpNet.use = phydb::SignalUseStr(phydb_net.use_);
+        //tmpNet.use = phydb::SignalUseStr(phydb_net.use_);
 
         auto phydb_pins_ref = phydb_net.GetPinsRef();
         auto phydb_iopin_names = phydb_net.GetIoPinNamesRef();

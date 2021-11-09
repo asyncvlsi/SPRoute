@@ -6,12 +6,12 @@ namespace sproute {
 
 void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 {
-	FILE *fp;
+    FILE *fp;
     int pinX, pinY, pinL, netID, numPins, pinInd, grid, newnetID, invalid_netID, segcount, minwidth;
     float pinX_in,pinY_in;
     int maxDeg = 0;
     int pinXarray[MAXNETDEG], pinYarray[MAXNETDEG], pinLarray[MAXNETDEG];
-    char netName[STRINGLEN];
+    string netName;
     bool remove;
     int numAdjust, cap, reduce, reducedCap;
     int adjust,net;
@@ -86,8 +86,8 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
     invalid_nets = (Net**) malloc(numNets*sizeof(Net*));
     for(int i=0; i<numNets; i++)
     {
-        nets[i] = (Net*) malloc(sizeof(Net));
-        invalid_nets[i] = (Net*) malloc(sizeof(Net));
+        nets[i] = new Net;
+        invalid_nets[i] = new Net;
     }
     seglistIndex = (int*) malloc(numNets*sizeof(int));
     
@@ -100,12 +100,13 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
     for(int i=0; i<numNets; i++)
     {
         net++;
-        strcpy(netName, grGen.grnets.at(i).name.c_str());
+        netName = grGen.grnets.at(i).name;
         netID = grGen.grnets.at(i).idx;
         numPins = grGen.grnets.at(i).numPins;
         if(verbose_ > none && numPins > 1000)
             cout << "reading large net: " << netName << " " << numPins << endl;
-        //cout << netName << " " << netID << " " << numPins << endl;
+        if(verbose_ > 2)
+	    cout << netName << " " << netID << " " << numPins << endl;
         if (1)
         {
             pinInd = 0;
@@ -137,12 +138,11 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
                     }
                 }
             }
-        
             if(pinInd>1) // valid net
             {
                 MD = max(MD, pinInd);
                 TD += pinInd;        
-                strcpy(nets[newnetID]->name, netName);
+		nets[newnetID]->name = netName;
                 nets[newnetID]->netIDorg = netID;
                 nets[newnetID]->numPins = numPins;
                 nets[newnetID]->deg = pinInd;
@@ -163,15 +163,15 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
             } // if valid net
             else
             {
-                strcpy(invalid_nets[invalid_netID]->name, netName);
+                invalid_nets[invalid_netID]->name = netName;
                 invalid_nets[invalid_netID]->netIDorg = netID;
                 invalid_nets[invalid_netID]->numPins = numPins;
-                invalid_nets[invalid_netID]->deg = pinInd;
-                invalid_nets[invalid_netID]->pinX = (short*) malloc(pinInd*sizeof(short));
-                invalid_nets[invalid_netID]->pinY = (short*) malloc(pinInd*sizeof(short));
-                invalid_nets[invalid_netID]->pinL = (short*) malloc(pinInd*sizeof(short));
+                invalid_nets[invalid_netID]->deg = 1;
+                invalid_nets[invalid_netID]->pinX = (short*) malloc(sizeof(short));
+                invalid_nets[invalid_netID]->pinY = (short*) malloc(sizeof(short));
+                invalid_nets[invalid_netID]->pinL = (short*) malloc(sizeof(short));
 
-
+		
                 invalid_nets[invalid_netID]->pinX[0] = pinXarray[0];
                 invalid_nets[invalid_netID]->pinY[0] = pinYarray[0];
                 invalid_nets[invalid_netID]->pinL[0] = pinLarray[0];
@@ -184,7 +184,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 
         if(verbose_ > none && numPins > 1000)
             cout << "reading large net finished: " << netName << endl;
-        if(verbose_ > none && i%10000 == 0)
+        if(verbose_ > none && i%100000 == 0)
             cout << "read " << i << " nets." << endl;
     } // loop i
 	if(verbose_ > none)
@@ -203,9 +203,9 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 		PlotRudy(rudy, algo);
 	
 	if(algo == DRC_MAP) {
-		PlotDrcMap();
-        exit(0);
-    }
+            PlotDrcMap();
+            exit(0);
+    	}
 	float avg_pin_den = PlotPinDensity(rudy, algo);
 	if(verbose_ > none)
 		cout << "avg pin density: " << avg_pin_den << endl;
@@ -1173,7 +1173,7 @@ void SPRoute::WriteGuideToFile(string guideFileName)
 	{
 		string netName(nets[netID]->name);
 		bool print = false;
-		fprintf(fp, "%s\n", nets[netID]->name);
+		fprintf(fp, "%s\n", nets[netID]->name.c_str());
 		fprintf(fp, "(\n");
         treeedges=sttrees[netID].edges;
 		deg=sttrees[netID].deg;
@@ -1253,7 +1253,7 @@ void SPRoute::WriteGuideToFile(string guideFileName)
 
 	for(netID=0;netID<numInvalidNets;netID++)
 	{
-		fprintf(fp, "%s\n", invalid_nets[netID]->name);
+		fprintf(fp, "%s\n", invalid_nets[netID]->name.c_str());
 		fprintf(fp, "(\n");
 
 		string netName(invalid_nets[netID]->name);
