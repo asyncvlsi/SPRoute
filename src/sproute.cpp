@@ -601,16 +601,20 @@ void SPRoute::UpdateGcellGrid(int xtrack_step, int ytrack_step)
     if(verbose_ > none) {
         cout << "GCELLGRID TO BE ADDED: " << endl;
         cout << "GCELLGRID X " << tmpGcellGrid_x.start << " DO " << tmpGcellGrid_x.numBoundaries << " STEP " << tmpGcellGrid_x.step << endl;
-        cout << "GCELLGRID X " << tmpGcellGrid_x1.start << " DO " << tmpGcellGrid_x1.numBoundaries << " STEP " << tmpGcellGrid_x1.step << endl;
         cout << "GCELLGRID Y " << tmpGcellGrid_y.start << " DO " << tmpGcellGrid_y.numBoundaries << " STEP " << tmpGcellGrid_y.step << endl;
-        cout << "GCELLGRID Y " << tmpGcellGrid_y1.start << " DO " << tmpGcellGrid_y1.numBoundaries << " STEP " << tmpGcellGrid_y1.step << endl;
+        if(tmpGcellGrid_x1.step != 0)
+            cout << "GCELLGRID X " << tmpGcellGrid_x1.start << " DO " << tmpGcellGrid_x1.numBoundaries << " STEP " << tmpGcellGrid_x1.step << endl;
+        if(tmpGcellGrid_y1.step != 0)
+            cout << "GCELLGRID Y " << tmpGcellGrid_y1.start << " DO " << tmpGcellGrid_y1.numBoundaries << " STEP " << tmpGcellGrid_y1.step << endl;
     }
 
     defDB.gcellGrids.push_back(tmpGcellGrid_x);
-    defDB.gcellGrids.push_back(tmpGcellGrid_x1);
+    if(tmpGcellGrid_x1.step != 0)
+        defDB.gcellGrids.push_back(tmpGcellGrid_x1);
 
     defDB.gcellGrids.push_back(tmpGcellGrid_y);
-    defDB.gcellGrids.push_back(tmpGcellGrid_y1);
+    if(tmpGcellGrid_y1.step != 0)
+        defDB.gcellGrids.push_back(tmpGcellGrid_y1);
 
     WriteGcellGridToPhydb();
 };

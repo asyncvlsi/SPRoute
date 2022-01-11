@@ -1350,7 +1350,7 @@ void SPRoute::WriteGuideToPhydb() {
 	TreeNode *nodes;
 	TreeEdge edge;
 	using Point3D = sproute_db::Point3D<int>;
-
+    
 	for(netID=0;netID<numValidNets;netID++)
 	{
 		string netName(nets[netID]->name);
