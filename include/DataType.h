@@ -34,6 +34,7 @@ typedef struct {
   short* pinY; // array of Y coordinates of pins
   short* pinL; // array of L coordinates of pins
   short minwidth;
+  bool small;
 } Net; // A Net is a set of connected MazePoints
 
 typedef struct edge_t : public galois::runtime::Lockable {

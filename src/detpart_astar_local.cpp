@@ -92,6 +92,101 @@ bool newRipupCheck_atomic_local(TreeEdge* treeedge, int ripup_threshold, int net
   }
 }
 
+int SPRoute::UndoneNetOrderX(galois::LargeArray<bool> &done)
+{
+	short *gridsX, *gridsY;
+	int i, d, n1, n2, x1, y1, x2, y2, ind, l, grid, min_x, min_y;
+	TreeEdge *treeedges, *treeedge;
+    TreeNode *treenodes;
+	StTree* stree;
+
+	numTreeedges = 0;
+
+	if (treeOrderCong != NULL) {
+		free(treeOrderCong);
+	}
+
+	treeOrderCong = (OrderTree*) malloc(numValidNets*sizeof(OrderTree));
+
+	i = 0;
+	int undone_cnt = 0;
+	for(int netID=0; netID<numValidNets; netID++)
+	{
+		if(done[netID]) {
+			continue;
+		}
+		stree = &(sttrees[netID]);
+		d = stree->deg;
+		treeOrderCong[undone_cnt].xmin = 0;
+		treeOrderCong[undone_cnt].treeIndex = netID;
+		for(ind=0; ind<2*d-3; ind++)
+		{
+			treeedges = stree->edges;
+            treeedge = &(treeedges[ind]);
+
+            bool edge_done = checkIfDone(treeedge);
+          
+		  	if(!edge_done) {
+				gridsX = treeedge->route.gridsX;
+				gridsY = treeedge->route.gridsY;
+				treeOrderCong[undone_cnt].xmin += ADIFF(gridsX[i], gridsX[treeedge->route.routelen]) +
+													ADIFF(gridsY[i], gridsY[treeedge->route.routelen]);
+				undone_cnt++;
+				break;
+			}
+		}
+	}
+
+	qsort (treeOrderCong, undone_cnt, sizeof(OrderTree), compareTEL);
+	return undone_cnt;
+}
+
+int SPRoute::UndoneNetOrderY(galois::LargeArray<bool> &done)
+{
+	short *gridsX, *gridsY;
+	int i, d, n1, n2, x1, y1, x2, y2, ind, l, grid, min_x, min_y;
+	TreeEdge *treeedges, *treeedge;
+    TreeNode *treenodes;
+	StTree* stree;
+
+	numTreeedges = 0;
+
+	if (treeOrderCong != NULL) {
+		free(treeOrderCong);
+	}
+
+	treeOrderCong = (OrderTree*) malloc(numValidNets*sizeof(OrderTree));
+
+	int undone_cnt = 0;
+	for(int netID=0; netID<numValidNets; netID++)
+	{
+		if(done[netID]) {
+			continue;
+		}
+		stree = &(sttrees[netID]);
+		d = stree->deg;
+		treeOrderCong[undone_cnt].xmin = 0;
+		treeOrderCong[undone_cnt].treeIndex = netID;
+		for(ind=0; ind<2*d-3; ind++)
+		{
+			treeedges = stree->edges;
+            treeedge = &(treeedges[ind]);
+
+            bool edge_done = checkIfDone(treeedge);
+          
+		  	if(!edge_done) {
+				gridsX = treeedge->route.gridsX;
+				gridsY = treeedge->route.gridsY;
+				treeOrderCong[undone_cnt].xmin = gridsY[i] + gridsY[treeedge->route.routelen];
+				undone_cnt++;
+				break;
+			}
+		}
+	}
+
+	qsort (treeOrderCong, undone_cnt, sizeof(OrderTree), compareTEL);
+	return undone_cnt;
+}
 
 
 void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costHeight,

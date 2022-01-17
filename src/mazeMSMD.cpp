@@ -2,10 +2,14 @@
 #include "sproute.h"
 namespace sproute {
 
-void SPRoute::UndoneFilter(galois::LargeArray<bool> &done) {
+void SPRoute::UndoneFilter(galois::LargeArray<bool> &done, bool small_filter) {
     galois::GAccumulator<uint32_t> count;
+    galois::GAccumulator<uint32_t> small_undone;
     galois::do_all(galois::iterate((int)0, numValidNets),[&](int netID) {
           
+          if(done[netID])
+            return;
+            
           int deg = sttrees[netID].deg;
 
           TreeEdge* treeedges = sttrees[netID].edges;
@@ -38,8 +42,20 @@ void SPRoute::UndoneFilter(galois::LargeArray<bool> &done) {
               
             }
           }
-        });
+        },
+        galois::steal());
+
     acc_count += count.reduce();
+
+    if(small_filter)  {
+      galois::do_all(galois::iterate((int)0, numValidNets),[&](int netID) {
+
+          if(nets[netID]->small && !done[netID])
+            small_undone += 1;
+        },
+        galois::steal());
+    }
+    n_small_undone = small_undone.reduce();
 }
 
 void SPRoute::mazeRouteMSMD(int iter, int expand, float costHeight, int ripup_threshold,

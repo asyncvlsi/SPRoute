@@ -116,7 +116,6 @@ auto RequestIndexerLate = [](const lateUpdateReq& top) {
 
 }
 
-bool checkIfDone(TreeEdge* treeedge);
 /*auto RequestIndexerConcurrent = [&](const concurrent_pq_grid& top) {
     return (unsigned int)(top.d1_push) / OBIM_delta;
 };*/

@@ -1,9 +1,10 @@
 #include "sproute.h"
-
+#include "soft_cap.h"
 namespace sproute {
 
-void SPRoute::PlotRudy(float* rudy, Algo algo) {
+float SPRoute::ComputeRudy(float* rudy, Algo algo) {
 
+    float max_rudy = -1;
     if(verbose_ > none)
         cout << xGrid << " " << yGrid << " grid" << endl;
     
@@ -36,6 +37,13 @@ void SPRoute::PlotRudy(float* rudy, Algo algo) {
             exit(1);
         }
 
+        if(max_x - min_x <= SMALL_NET_THRSHD && max_y - min_y <= SMALL_NET_THRSHD) {
+            nets[netID]->small = false;
+        }
+        else    {
+            nets[netID]->small = true;
+        }
+
         float wl = max_x - min_x + 1 + max_y - min_y + 1;
         float local_rudy = wl / ((float) (max_x - min_x + 1) * (float) (max_y - min_y + 1));
         if(isnan(local_rudy)) {
@@ -62,6 +70,9 @@ void SPRoute::PlotRudy(float* rudy, Algo algo) {
         int y = (int) invalid_nets[netID]->pinY[0];
         rudy[y * xGrid + x] += 1;
     }
+    
+    for(int i = 0; i < xGrid * yGrid; i++)
+        max_rudy = max(max_rudy, rudy[i]);
 
     if(algo == RUDY) {
         float rudy_sum = 0;
@@ -103,12 +114,12 @@ void SPRoute::PlotRudy(float* rudy, Algo algo) {
 
         cout << "avg: " << rudy_sum / (float)(xGrid * yGrid) << endl;
     }
-
+    return max_rudy;
 }
 
 
 
-float SPRoute::PlotPinDensity(float* pin_density, Algo algo) {
+float SPRoute::ComputePinDensity(float* pin_density, Algo algo) {
 
     if(verbose_ > none)
         cout << xGrid << " " << yGrid << " grid" << endl;

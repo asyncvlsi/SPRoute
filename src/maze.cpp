@@ -4,7 +4,7 @@
 
 namespace sproute {
 
-bool checkIfDone(TreeEdge* treeedge) {
+bool SPRoute::checkIfDone(TreeEdge* treeedge) {
     short *gridsX, *gridsY;
     int grid, ymin, xmin;
     

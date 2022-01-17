@@ -93,9 +93,7 @@ void SPRoute::MemPinAdj(int xGrid, int yGrid) {
                             cout << "max h adj: " << x << " " << y << " " << l << endl;
                         }
                     }
-                    
                 }
-
 
                 if(first_rect.lowerLeft.y == ymin && lefDB.layers[layerIdx].direction == "VERTICAL" && ymin_cnt != 1) {
                     int x = sproute_db::find_Gcell(first_rect.lowerLeft.x, defDB.xGcellBoundaries);
@@ -114,7 +112,6 @@ void SPRoute::MemPinAdj(int xGrid, int yGrid) {
                             cout << "v adj: " << x << " " << y << " " << l << endl;
                         }
                     }
-                    
                 }
 
                 if(first_rect.lowerLeft.y == ymax && lefDB.layers[layerIdx].direction == "VERTICAL" && ymax_cnt != 1) {

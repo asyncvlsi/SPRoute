@@ -199,19 +199,22 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
     
        // allocate memory and initialize for edges
 	float* rudy = new float [xGrid * yGrid];
-	if(algo == RUDY)
-		PlotRudy(rudy, algo);
+	
+	max_rudy = ComputeRudy(rudy, algo);
 	
 	if(algo == DRC_MAP) {
-            PlotDrcMap();
-            exit(0);
-    	}
-	float avg_pin_den = PlotPinDensity(rudy, algo);
+		PlotDrcMap();
+		exit(0);
+	}
+	float avg_pin_den = ComputePinDensity(rudy, algo);
 	if(verbose_ > none)
 		cout << "avg pin density: " << avg_pin_den << endl;
 	if(algo == RUDY || algo == PIN_DENSITY || algo == DRC_MAP) {
 		exit(0) ;
 	}
+
+	float rudy_weight = (max_rudy < 48)? DEFAULT_RUDY_WEIGHT : 0.01;
+	float pin_density_weight = (max_rudy < 48)? DEFAULT_PIN_DENSITY_WEIGHT : 1.00;
 
     h_edges = (Edge*)calloc(((xGrid-1)*yGrid), sizeof(Edge));
     v_edges = (Edge*)calloc((xGrid*(yGrid-1)), sizeof(Edge));
@@ -712,165 +715,31 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 						mazeRouteMSMD(i,enlarge, costheight, ripup_threshold,mazeedge_Threshold, false /*!(i % 3)*/, cost_type, done, thread_local_storage);
 						break;
 					}
-					case DetPart: {
-						std::vector<std::vector<int>> vecParts(parts);
-						int len       = numValidNets / (14) + 1;
-						int len_parts = len / parts + 1;
+					case Det: {
+						if(i == 1) { //first iteration
+							UndoneFilter(done, true);
+							if(verbose_ > none)
+								cout << "num of small undone nets: " << n_small_undone <<  endl;
+							
+							int nets_per_part;
 
-						for (int i = 0; i < numValidNets; i++) {
-							int i1 = i / len;
-							int i2 = (i - i1 * len) / len_parts;
-							vecParts[i2].push_back(i);
-						}
-						if(verbose_ > none)
-							std::cout << "parts: " << parts << std::endl;
-					
-						/*mazeRouteMSMDDetPart(i, enlarge, costheight, ripup_threshold,
-											mazeedge_Threshold, false , cost_type, parts,
-											vecParts, done);
-						*/
-                        break;
-					}
-					case DetPart_Astar: {
-						std::vector<std::vector<int>> vecParts(parts);
-						int len       = numValidNets / (14) + 1;
-						int len_parts = len / parts + 1;
+							if(n_small_undone > parts * max_nets_per_part)
+								nets_per_part = max_nets_per_part;
+							else
+								nets_per_part = max(8, n_small_undone / parts + 1);
 
-						for (int i = 0; i < numValidNets; i++) {
-							int i1 = i / len;
-							int i2 = (i - i1 * len) / len_parts;
-							vecParts[i2].push_back(i);
-						}
-						if(verbose_ > none)
-							std::cout << "parts: " << parts << std::endl;
-					
-						/*mazeRouteMSMDDetPart_Astar(i, enlarge, costheight, ripup_threshold,
-											mazeedge_Threshold, false, cost_type, parts,
-											vecParts, done);
-						*/
-                        break;
-					}
-					case DetPart_Astar_Data: {
-						if(i == 1)
-							UndoneFilter(done);
-						int nets_per_part;
-						if((numValidNets - acc_count) > parts * max_nets_per_part)
-							nets_per_part = max_nets_per_part;
-						else
-							nets_per_part = max(2, (numValidNets - acc_count) / parts + 1);
-						
-						if(verbose_ > none)
-							cout << "nets_per_part: "  << nets_per_part << endl;
-						std::vector<int> part;
-						
-						std::vector<std::vector<int>> vecParts;
-						
-
-						for (int netID = 0; netID < numValidNets; netID ++) {
-							if(!done[netID]) {
-								if(part.size() < nets_per_part) {
-									part.push_back(netID);
-								}
-								else {
-									vecParts.push_back(part);
-									part.clear();
-									part.push_back(netID);
-								}
-							}
-						}
-						
-						if(part.size() != 0)
-							vecParts.push_back(part);
-						if(verbose_ > none)
-							std::cout << "parts: " << vecParts.size() << std::endl;
-					
-						/*mazeRouteMSMDDetPart_Astar_Data(i, enlarge, costheight, ripup_threshold,
-											mazeedge_Threshold, false, cost_type, vecParts.size(),
-											vecParts, done, thread_local_storage);
-						*/
-                        break;
-					}
-					case DetPart_Astar_Local: {
-						if(i == 1)
-							UndoneFilter(done);
-						int nets_per_part;
-						if((numValidNets - acc_count) > parts * max_nets_per_part)
-							nets_per_part = max_nets_per_part;
-						else
-							nets_per_part = max(8, (numValidNets - acc_count) / parts + 1);
-
-						int counted_num_part = (numValidNets - acc_count) / nets_per_part + 1;
-						if(verbose_ > none)
-							cout << "avg nets_per_part: "  << nets_per_part << " counted parts: " << counted_num_part << endl;
-						std::vector<int> part;
-						
-						std::vector<std::vector<int>> vecParts;
-						//vecParts.resize(counted_num_part)
-						if(past_cong > 20000 && max_nets_per_part>= 16)
-							max_nets_per_part /= 2;
-						
-						rudytimer.start();
-						vecParts.resize(counted_num_part);
-						for (int netID = 0; netID < numValidNets; netID ++) {
-							if(!done[netID]) {
-								vecParts[netID % counted_num_part].push_back(netID);
-							}
-						}
-						for(int batchID = 0; batchID < vecParts.size(); batchID++) {
-							cout << vecParts[batchID].size() << " ";
-						}
-						cout << endl;
-						rudytimer.stop();
-						/*for (int netID = 0; netID < numValidNets; netID ++) {
-							if(!done[netID]) {
-								if(part.size() < nets_per_part) {
-									part.push_back(netID);
-								}
-								else {
-									vecParts.push_back(part);
-									part.clear();
-									part.push_back(netID);
-								}
-							}
-						}*/
-
-						/*else {
+							int counted_num_part = n_small_undone / nets_per_part + 1;
+							if(verbose_ > none)
+								cout << "acc_count: " << acc_count << "avg nets_per_part: "  << nets_per_part << " counted parts: " << counted_num_part << endl;
+							std::vector<int> part;
+							
+							std::vector<std::vector<int>> vecParts;
+							//vecParts.resize(counted_num_part)
+							
 							rudytimer.start();
-							RUDY_scheduler(i, vecParts, done);
-							rudytimer.stop();
-						}*/
-						
-						if(part.size() != 0)
-							vecParts.push_back(part);
-						if(verbose_ > none)
-							std::cout << "parts: " << vecParts.size() << std::endl;
-					
-						mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
-											mazeedge_Threshold, false, cost_type, vecParts.size(),
-											vecParts, done, thread_local_storage);
-						
-                        break;
-					}
-					
-					case DetPart_Astar_RUDY: {
-						if(i == 1)
-							UndoneFilter(done);
-						int nets_per_part;
-						if((numValidNets - acc_count) > parts * max_nets_per_part)
-							nets_per_part = max_nets_per_part;
-						else
-							nets_per_part = max(8, (numValidNets - acc_count) / parts + 1);
-
-						int counted_num_part = (numValidNets - acc_count) / nets_per_part + 1;
-						
-						std::vector<std::vector<int>> vecParts;
-						
-						//if(i >= 2)
-						rudytimer.start();
-						if(i == 1) {
 							vecParts.resize(counted_num_part);
 							for (int netID = 0; netID < numValidNets; netID ++) {
-								if(!done[netID]) {
+								if(nets[netID]->small && !done[netID]) {
 									vecParts[netID % counted_num_part].push_back(netID);
 								}
 							}
@@ -878,38 +747,98 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 								cout << vecParts[batchID].size() << " ";
 							}
 							cout << endl;
+							rudytimer.stop();
+							
+							if(part.size() != 0)
+								vecParts.push_back(part);
+							std::cout << "parts: " << vecParts.size() << std::endl;
+						
+							mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
+												mazeedge_Threshold, false, cost_type, vecParts.size(),
+												vecParts, done, thread_local_storage);
 						}
-						else {
-							RUDY_scheduler(i, maxOverflow, counted_num_part, vecParts, done);
-						}
-						rudytimer.stop();
-						/*else {
-							for (int netID = 0; netID < numValidNets; netID ++) {
+						else { // 2nd iteration and after
+							if(max_rudy > 50 && i == 2)
+								max_nets_per_part = 128;
+
+							if(max_nets_per_part >= 16)
+								max_nets_per_part /= 2;
+							UndoneFilter(done);
+							int nets_per_part;
+
+							nets_per_part = max_nets_per_part;
+							int counted_num_part = (numValidNets - acc_count) / nets_per_part + 1;
+							if(verbose_ > none)
+								cout << "avg nets_per_part: "  << nets_per_part << " counted parts: " << counted_num_part << endl;
+							std::vector<int> part;
+							
+							std::vector<std::vector<int>> vecParts;
+						
+							rudytimer.start();
+							vecParts.resize(counted_num_part);
+							int undone_cnt = numValidNets;
+							if(i == 2)
+								undone_cnt = UndoneNetOrderX(done);
+							else if(i == 3)
+								undone_cnt = UndoneNetOrderY(done);
+						
+
+							for (int netOrderID = 0; netOrderID < undone_cnt; netOrderID++) {
+								int netID;
+								if(undone_cnt == numValidNets)
+									netID = netOrderID;
+								else
+									netID = treeOrderCong[netOrderID].treeIndex;
+
+								if(undone_cnt != numValidNets && netOrderID < 10 && verbose_ > none) 
+									cout << netOrderID << " " << netID << " " << treeOrderCong[netOrderID].xmin << endl;
+
 								if(!done[netID]) {
-									if(part.size() < nets_per_part) {
-										part.push_back(netID);
+									if(max_nets_per_part <= 16) {
+										int original_batch_id;
+										if(i != 1)
+											original_batch_id = (netOrderID + i) % counted_num_part;
+										else
+											original_batch_id = netOrderID / counted_num_part;
+										bool pushed = false;
+										for(int batchID = original_batch_id; batchID < original_batch_id + counted_num_part; batchID++) {
+											if(vecParts[batchID % counted_num_part].size() < nets_per_part) {
+												vecParts[batchID % counted_num_part].push_back(netID);
+												pushed = true;
+												break;
+											}
+										}
+										if(!pushed) {
+											cout << "unpushed: " << netID << " " << counted_num_part << " " << original_batch_id << endl;
+											for(int batchID = 0; batchID < vecParts.size(); batchID++) {
+												cout << vecParts[batchID].size() << " ";
+											}
+											exit(1);
+										}
 									}
-									else {
-										vecParts.push_back(part);
-										part.clear();
-										part.push_back(netID);
-									}
+									else
+										vecParts[(netOrderID + i) % counted_num_part].push_back(netID);
 								}
 							}
-						}*/
-						if(verbose_ > none)
-							std::cout << "parts: " << vecParts.size() << std::endl;
-					
-						/*mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
-											mazeedge_Threshold, false, cost_type, vecParts.size(),
-											vecParts, done, thread_local_storage);
-						*/
-                        break;
-					}
-					case Astar: {
-						//mazeRouteMSMD_astar(i,enlarge, costheight, ripup_threshold,mazeedge_Threshold, !(i % 3), cost_type, astar_weight, done);
+							for(int batchID = 0; batchID < vecParts.size(); batchID++) {
+								cout << vecParts[batchID].size() << " ";
+							}
+							if(verbose_ > none)
+								cout << endl;
+							rudytimer.stop();
+							
+							if(part.size() != 0)
+								vecParts.push_back(part);
+							if(verbose_ > none)
+								std::cout << "parts: " << vecParts.size() << std::endl;
+						
+							mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
+												mazeedge_Threshold, false, cost_type, vecParts.size(),
+												vecParts, done, thread_local_storage);
+						}
 						break;
 					}
+					
 					default: {
 						cout << " unkown algo: " << algo << endl;
 						exit(1);

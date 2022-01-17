@@ -23,6 +23,11 @@
 
 #define HIGH_ADJ 0.7
 
+#define DEFAULT_RUDY_WEIGHT 0.1
+#define DEFAULT_PIN_DENSITY_WEIGHT 1.0
+
+#define SMALL_NET_THRSHD 30 // small nets are filtered out in first iteration
+
 int GLOBAL_CAP_ADJ(int x, float rudy, int layerID); 
 
 #endif

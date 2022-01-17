@@ -30,6 +30,9 @@ private:
     int numThreads;
     int max_iteration;
 
+    int n_small_undone;
+    float max_rudy;
+
     int verbose_ = 0;
 
     void LinkTrackToLayer();
@@ -101,10 +104,10 @@ private:
     void mazeRouteMSMD_astar(int iter, int expand, float costHeight, int ripup_threshold,
                    int mazeedge_Threshold, bool Ordering, int cost_type, float astar_weight, galois::LargeArray<bool>& done);
 
-    void PlotRudy(float* rudy, Algo algo);
-    float PlotPinDensity(float* pin_density, Algo algo);
+    float ComputeRudy(float* rudy, Algo algo);
+    float ComputePinDensity(float* pin_density, Algo algo);
     void PlotDrcMap();
-    void UndoneFilter(galois::LargeArray<bool> &done);
+    void UndoneFilter(galois::LargeArray<bool> &done, bool small_filter = false);
     void RUDY_scheduler(int iter, int max_overflow, int counted_num_part, std::vector<std::vector<int>>& vecParts, galois::LargeArray<bool> &done);
 
     void gen_brk_RSMT(bool congestionDriven, bool reRoute, bool genTree, bool newType, bool noADJ);
@@ -116,6 +119,9 @@ private:
     void newLA();
     void newLayerAssignmentV4();
     void checkUsage();
+    bool checkIfDone(TreeEdge* treeedge);
+    int UndoneNetOrderX(galois::LargeArray<bool> &done);
+    int UndoneNetOrderY(galois::LargeArray<bool> &done);
     void RCEstimate();
     void updateCongestionHistory(int upType);
     void routeLVAll(int threshold, int expand);
