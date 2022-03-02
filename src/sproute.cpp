@@ -389,15 +389,43 @@ void SPRoute::LoadPhyDBNets() {
     defDB.numNets = defDB.nets.size();
 }
 
-/*void SPRoute::LoadPhyDBDefVias() {
+void SPRoute::LoadPhyDBDefVias() {
 
-    
+     
     auto phydb_defvias = db_ptr_->GetDesignPtr()->GetDefViasRef();
 
     for(auto phydb_defvia : phydb_defvias) {
+        sproute_db::defVia tmpVia;   
         int idx = defDB.vias.size();
+        tmpVia.name = phydb_defvia.name_;
+        tmpVia.idx = idx;
+        tmpVia.viaRuleName = phydb_defvia.via_rule_name_;
+        tmpVia.cutSize.x = phydb_defvia.cut_size_.x;
+        tmpVia.cutSize.y = phydb_defvia.cut_size_.y;
+        tmpVia.layers[0] = phydb_defvia.layers_[0];
+        tmpVia.layers[1] = phydb_defvia.layers_[1];
+        tmpVia.layers[2] = phydb_defvia.layers_[2];
+        tmpVia.cutSpacing.x = phydb_defvia.cut_spacing_.x;
+        tmpVia.cutSpacing.y = phydb_defvia.cut_spacing_.y;
+
+        tmpVia.botEnc.x = phydb_defvia.bot_enc_.x;
+        tmpVia.botEnc.y = phydb_defvia.bot_enc_.y;
+        tmpVia.topEnc.x = phydb_defvia.top_enc_.x;
+        tmpVia.topEnc.y = phydb_defvia.top_enc_.y;
+        tmpVia.numCutRows = phydb_defvia.num_cut_rows_;
+        tmpVia.numCutCols = phydb_defvia.num_cut_cols_;
+
+        tmpVia.origin.x = phydb_defvia.origin_.x;
+        tmpVia.origin.y = phydb_defvia.origin_.y;
+        tmpVia.botOffset.x = phydb_defvia.bot_offset_.x;
+        tmpVia.botOffset.y = phydb_defvia.bot_offset_.y;
+        tmpVia.topOffset.x = phydb_defvia.top_offset_.x;
+        tmpVia.topOffset.y = phydb_defvia.top_offset_.y;
+
+        defDB.vias.push_back(tmpVia);
+        defDB.defVia2idx[tmpVia.name] = idx;
     }
-}*/
+}
 
 void SPRoute::LoadPhyDBGcellGrids() {
     auto phydb_gcellgrids = db_ptr_->GetDesignPtr()->GetGcellGridsRef();
@@ -424,7 +452,7 @@ void SPRoute::LoadPhyDBToDefDB() {
     LoadPhyDBSNets();
     LoadPhyDBNets();
 
-    //LoadPhyDBDefVias(); TODO: Add phydb APIs first
+    LoadPhyDBDefVias(); 
     LoadPhyDBGcellGrids();
 
 }

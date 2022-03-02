@@ -199,7 +199,7 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
   int astar_weight = 0.0;
   int maze_enlarge = 20;
   float hard_cap_penalty = 10;
-  std::cout << "inside mazeRouteMSMDDetPart_Astar_Local astar_weight: " << astar_weight << endl;
+  //std::cout << "inside mazeRouteMSMDDetPart_Astar_Local astar_weight: " << astar_weight << endl;
   // allocate memory for distance and parent and pop_heap
   h_costTable = (float*)calloc(40 * hCapacity, sizeof(float));
   v_costTable = (float*)calloc(40 * vCapacity, sizeof(float));
@@ -312,7 +312,7 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
       continue;
 
     usage_updates.clear();
-    galois::runtime::profileVtune( [&] (void) {
+    //galois::runtime::profileVtune( [&] (void) {
     galois::do_all(
         galois::iterate(vecParts[idx]),
         [&](const auto nidRPC) {
@@ -1193,7 +1193,7 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
         galois::chunk_size<1>(),
         galois::loopname("net-level parallelism")); // galois::do_all
 
-        }, "do-all vtune");
+    //    }, "do-all vtune"); //vtune loop
     
     //	galois::StatTimer roundtimer1("round");
     // roundtimer1.start();

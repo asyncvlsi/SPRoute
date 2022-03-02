@@ -743,15 +743,15 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 									vecParts[netID % counted_num_part].push_back(netID);
 								}
 							}
-							for(int batchID = 0; batchID < vecParts.size(); batchID++) {
+							/*for(int batchID = 0; batchID < vecParts.size(); batchID++) {
 								cout << vecParts[batchID].size() << " ";
 							}
-							cout << endl;
+							cout << endl;*/
 							rudytimer.stop();
 							
 							if(part.size() != 0)
 								vecParts.push_back(part);
-							std::cout << "parts: " << vecParts.size() << std::endl;
+							//std::cout << "parts: " << vecParts.size() << std::endl;
 						
 							mazeRouteMSMDDetPart_Astar_Local(i, enlarge, costheight, ripup_threshold,
 												mazeedge_Threshold, false, cost_type, vecParts.size(),

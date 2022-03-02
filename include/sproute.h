@@ -74,6 +74,7 @@ private:
     void LoadPhyDBSNets();
     void LoadPhyDBNets();
     void LoadPhyDBGcellGrids();
+    void LoadPhyDBDefVias();
 
     void WriteGuideToPhydb();
     void WriteGcellGridToPhydb();
