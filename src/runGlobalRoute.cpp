@@ -1,6 +1,7 @@
 #include "sproute.h"
 #include "global.h"
 #include "soft_cap.h"
+#include "writeFile.h"
 
 namespace sproute {
 
@@ -106,7 +107,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
         if(verbose_ > none && numPins > 1000)
             cout << "reading large net: " << netName << " " << numPins << endl;
         if(verbose_ > 2)
-	    cout << netName << " " << netID << " " << numPins << endl;
+	    	cout << netName << " " << netID << " " << numPins << endl;
         if (1)
         {
             pinInd = 0;
@@ -142,7 +143,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
             {
                 MD = max(MD, pinInd);
                 TD += pinInd;        
-		nets[newnetID]->name = netName;
+				nets[newnetID]->name = netName;
                 nets[newnetID]->netIDorg = netID;
                 nets[newnetID]->numPins = numPins;
                 nets[newnetID]->deg = pinInd;
@@ -199,6 +200,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
     
        // allocate memory and initialize for edges
 	float* rudy = new float [xGrid * yGrid];
+	float* pin_density = new float [xGrid * yGrid];
 	
 	max_rudy = ComputeRudy(rudy, algo);
 	
@@ -206,7 +208,7 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 		PlotDrcMap();
 		exit(0);
 	}
-	float avg_pin_den = ComputePinDensity(rudy, algo);
+	float avg_pin_den = ComputePinDensity(pin_density, algo);
 	if(verbose_ > none)
 		cout << "avg pin density: " << avg_pin_den << endl;
 	if(algo == RUDY || algo == PIN_DENSITY || algo == DRC_MAP) {
@@ -221,6 +223,10 @@ void SPRoute::ReadGR(sproute_db::grGenerator& grGen, Algo algo)
 
 	v_edges3D = (Edge3D*)calloc((numLayers*xGrid*yGrid), sizeof(Edge3D));
 	h_edges3D = (Edge3D*)calloc((numLayers*xGrid*yGrid), sizeof(Edge3D));
+
+	for(int i = 0; i < xGrid * yGrid; i++) {
+		rudy[i] = pin_density_weight * pin_density[i] + rudy_weight * rudy[i];
+	}
 
     //2D edge innitialization
     TC=0;
@@ -421,7 +427,7 @@ void SPRoute::RunGlobalRoute(string OutFileName, int maxMazeRound, Algo algo) {
 	int updateType, minofl, minoflrnd = 0, mazeRound, upType, cost_type, bmfl, bwcnt;
 	bool goingLV, healingNeed, noADJ, extremeNeeded, needOUTPUT;
 
-	int parts = 128;
+	int parts = 32;
 	int max_nets_per_part = 64;
 	galois::LargeArray<bool> done;
 	float astar_weight = 1.0;
@@ -1058,9 +1064,9 @@ void SPRoute::WriteRoutedGrid(FILE* fp, std::set<sproute_db::Point3D<int>>& rout
 	}
 }
 
-void SPRoute::WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Point3D<int>>& routedGrid)
+void SPRoute::WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Routed3DPoint>& routedGrid)
 {
-	auto design_p = db_ptr_->GetDesignPtr();
+	/*auto design_p = db_ptr_->GetDesignPtr();
 	for(auto p : routedGrid)
 	{
 		int llx  = defDB.xGcellBoundaries.at(p.x);		
@@ -1079,7 +1085,114 @@ void SPRoute::WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Point3D<int
 			cout << "Error in writing guide: exceeds top layer! " << endl;
 			exit(1);
 		}
+	}*/
+	auto design_p = db_ptr_->GetDesignPtr();
+	bool prev_merge = false;
+	
+	string netName = defDB.nets[netID].name;
+	int start_x = -1, start_y = -1, start_z = -1;
+	int end_x = -1, end_y = -1, end_z = -1;
+	int llx, lly, urx, ury, layer;
+	
+	for(auto p : routedGrid) {
+		if(start_x == -1 && start_y == -1) {
+			start_x = p.x;
+			start_y = p.y;
+			start_z = p.z;
+			end_x = p.x;
+			end_y = p.y;
+			end_z = p.z;
+			continue;
+		}
+		else {
+			bool merge = false;
+			if(start_z == p.z) {
+				if(p.horizontal && start_y == p.y && end_x + 1 == p.x) {
+					merge = true;
+					end_x = p.x;
+				} 
+				else if((!p.horizontal) && start_x == p.x && end_y + 1 == p.y) {
+					merge = true;
+					end_y = p.y;
+				}
+			}
+			prev_merge = merge;
+			if(!merge) {
+				llx  = defDB.xGcellBoundaries.at(start_x);		
+				lly = defDB.yGcellBoundaries.at(start_y);
+
+				if(double_patch_guide_) {
+					end_x = min(end_x + 1, xGrid - 1);
+					end_y = min(end_y + 1, yGrid - 1);//double the boundary
+				}
+				else {
+					end_x = min(end_x, xGrid - 1);
+					end_y = min(end_y, yGrid - 1);
+				}
+
+				urx = defDB.xGcellBoundaries.at(end_x + 1);
+				ury  = defDB.yGcellBoundaries.at(end_y + 1);
+				layer = start_z;
+
+				start_x = p.x;
+				start_y = p.y;
+				start_z = p.z;
+				end_x = p.x;
+				end_y = p.y;
+				end_z = p.z;
+
+				if(layer * 2 < lefDB.layers.size())
+				{
+					design_p->InsertRoutingGuide(netID, llx, lly, urx, ury, layer * 2);
+					//fprintf(fp, "%d %d %d %d %s\n", llx, lly, urx, ury, layerName.c_str());
+				}
+				else {
+					cout << "Error in writing guide: exceeds top layer! " << endl;
+					exit(1);
+				}
+			}
+		}
 	}
+
+	if(1) {
+		llx  = defDB.xGcellBoundaries.at(start_x);		
+		lly = defDB.yGcellBoundaries.at(start_y);
+		if(double_patch_guide_) {
+			end_x = min(end_x + 1, xGrid - 1);
+			end_y = min(end_y + 1, yGrid - 1);//double the boundary
+		}
+		else {
+			end_x = min(end_x, xGrid - 1);
+			end_y = min(end_y, yGrid - 1);
+		}
+		urx = defDB.xGcellBoundaries.at(end_x + 1);
+		ury  = defDB.yGcellBoundaries.at(end_y + 1);
+		layer = start_z;
+
+		/*bool horizontal_patch = (lefDB.layers.at(layer * 2).direction == "HORIZONTAL")? true : false;
+		int move_up = horizontal_patch? 1 : 0;
+		int move_right = horizontal_patch? 0 : 1;
+
+		if(end_x + 1 + move_right < defDB.xGcellBoundaries.size() &&  end_y + 1 + move_up < defDB.yGcellBoundaries.size()) {
+
+			int patch_llx  = defDB.xGcellBoundaries.at(start_x + move_right);		
+			int patch_lly = defDB.yGcellBoundaries.at(start_y + move_up);
+			int patch_urx = defDB.xGcellBoundaries.at(end_x + 1 + move_right);
+			int patch_ury  = defDB.yGcellBoundaries.at(end_y + 1 + move_up);
+			string layerName = lefDB.layers.at(layer * 2).name;
+			fprintf(fp, "%d %d %d %d %s\n", patch_llx, patch_lly, patch_urx, patch_ury, layerName.c_str());
+		}*/
+
+		if(layer * 2 < lefDB.layers.size())
+		{
+			design_p->InsertRoutingGuide(netID, llx, lly, urx, ury, layer * 2);
+		}
+		else {
+			cout << "Error in writing guide: exceeds top layer! " << endl;
+			exit(1);
+		}
+	}
+	
 }
 
 void SPRoute::WriteGuideToFile(string guideFileName)
@@ -1279,8 +1392,18 @@ void SPRoute::WriteGuideToPhydb() {
 	TreeNode *nodes;
 	TreeEdge edge;
 	using Point3D = sproute_db::Point3D<int>;
+
+	bool* is_horizontal = new bool [numLayers];
+	bool m1_horizontal = (lefDB.layers[0].direction == "HORIZONTAL")? true : false; //by default m1 is vertical
+	for(int i = 0; i < numLayers; i++) {
+		if(i % 2 == 0)
+			is_horizontal[i] = m1_horizontal;
+		else	
+			is_horizontal[i] = !m1_horizontal;
+	}
     
-	for(netID=0;netID<numValidNets;netID++)
+	//for(netID=0;netID<numValidNets;netID++)
+	galois::do_all(galois::iterate((uint32_t) 0, (uint32_t)numValidNets),[&](uint32_t netID) 
 	{
 		string netName(nets[netID]->name);
 		bool print = false;
@@ -1292,18 +1415,26 @@ void SPRoute::WriteGuideToPhydb() {
 		int grNetID = defDB.netName2netidx.find(nets[netID]->name)->second; 
 		auto grNet = grGen.grnets.at(grNetID);
 
-		std::set<Point3D> routedGrid;
+		std::set<sproute_db::Routed3DPoint> routedGrid;
+		//std::set<Point3D> routedGrid;
 
 		for(auto p : grNet.pinRegion)
 		{
-			int botL = p.z - 1;
-			int topL = botL + 2;
+			int botL, topL;
+			if(p.z == 1) { //normal pin
+				botL = p.z - 1; //metal1
+				topL = p.z + 1; //metal3
+			}
+			else  { //IOpin
+				botL = p.z - 2; //one layer lower
+				topL = p.z;		// one layer higher
+			}
             
 			for (int layer = botL; layer <= topL; layer++) //this is not good, assuming all pins are on botL layer.
 			{
 				assert(p.x < xGrid && p.y < yGrid);
 				if(layer < numLayers)
-                	routedGrid.insert(Point3D(p.x, p.y, layer));
+                	routedGrid.insert(sproute_db::Routed3DPoint(p.x, p.y, layer, is_horizontal[layer]));
             }
 		}
 
@@ -1316,7 +1447,7 @@ void SPRoute::WriteGuideToPhydb() {
 			{
 				assert(nodes[i].x < xGrid && nodes[i].y < yGrid);
 				if(layer < numLayers)
-					routedGrid.insert(Point3D(nodes[i].x, nodes[i].y, layer));
+					routedGrid.insert(sproute_db::Routed3DPoint(nodes[i].x, nodes[i].y, layer, is_horizontal[layer]));
 			}
 		}
 
@@ -1342,25 +1473,25 @@ void SPRoute::WriteGuideToPhydb() {
 				for(int output_cnt = 0; output_cnt < 1; output_cnt++)
 				{
 					for (i = 0; i <= routeLen; i ++) {
-						routedGrid.insert(Point3D(gridsX[i], gridsY[i], gridsL[i]));
-						if(i % 5 == 3) {
+						routedGrid.insert(sproute_db::Routed3DPoint(gridsX[i], gridsY[i], gridsL[i], is_horizontal[gridsL[i]]));
+						if(i % 5 == 0) {
 							if(gridsL[i] <= numLayers - 2) {
-								routedGrid.insert(Point3D(gridsX[i], gridsY[i], gridsL[i] + 1));
+								routedGrid.insert(sproute_db::Routed3DPoint(gridsX[i], gridsY[i], gridsL[i] + 1, is_horizontal[gridsL[i] + 1]));
 								//cout << "add top" << endl;
 							}
 							else if(gridsL[i] >= 2) {//metal5 adding a metal4 
-								routedGrid.insert(Point3D(gridsX[i], gridsY[i], gridsL[i] - 1));
+								routedGrid.insert(sproute_db::Routed3DPoint(gridsX[i], gridsY[i], gridsL[i] - 1, is_horizontal[gridsL[i] - 1]));
 							}
 						}
 					}
 				}
 			}
 		}
-		int lef_netID = defDB.netName2netidx[netName];
-		WriteRoutedGridToPhydb(lef_netID, routedGrid);
-	}
+		int def_netID = defDB.netName2netidx[netName];
+		WriteRoutedGridToPhydb(def_netID, routedGrid);
+	}, galois::steal());
 
-	for(netID=0;netID<numInvalidNets;netID++)
+	galois::do_all(galois::iterate((uint32_t) 0, (uint32_t)numInvalidNets),[&](uint32_t netID) 
 	{
 		string netName(invalid_nets[netID]->name);
 		bool print = false;
@@ -1373,7 +1504,7 @@ void SPRoute::WriteGuideToPhydb() {
 		int grNetID = defDB.netName2netidx.find(netName)->second; 
 		auto grNet = grGen.grnets.at(grNetID);
 
-		std::set<Point3D> routedGrid;
+		std::set<sproute_db::Routed3DPoint> routedGrid;
 
 		for(auto p : grNet.pinRegion)
 		{
@@ -1384,13 +1515,14 @@ void SPRoute::WriteGuideToPhydb() {
 			{
 				if(layer * 2 < lefDB.layers.size())
 				{
-					routedGrid.insert(Point3D(p.x, p.y, layer));
+					routedGrid.insert(sproute_db::Routed3DPoint(p.x, p.y, layer, is_horizontal[layer]));
 				}
 			}
 		}
-		int lef_netID = defDB.netName2netidx[netName];
-		WriteRoutedGridToPhydb(lef_netID, routedGrid);
-	}
+		int def_netID = defDB.netName2netidx[netName];
+		WriteRoutedGridToPhydb(def_netID, routedGrid);
+	}, galois::steal());
+	delete[] is_horizontal;
 
 }
 

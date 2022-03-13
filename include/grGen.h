@@ -250,7 +250,17 @@ public:
 					int pinx = find_Gcell(x, defDB.xGcellBoundaries);
 					int piny = find_Gcell(y, defDB.yGcellBoundaries);
 					z = lefDB.layer2idx[iopin.layerName] / 2 + 1;
-			        tmpGRnet.pinRegion.insert(Point3D<int>(pinx, piny, z));
+			        
+					int xmin = (pinx < 1)? 0 : pinx - 1;
+					int ymin = (piny < 1)? 0 : piny - 1;
+					int xmax = (pinx >= grid.x - 1)? grid.x - 1: pinx + 1;
+					int ymax = (piny >= grid.y - 1)? grid.y - 1: piny + 1;
+
+					for(int pinRegionx = xmin; pinRegionx <= xmax; pinRegionx++)
+					{
+						for(int pinRegiony = ymin; pinRegiony <= ymax; pinRegiony++)
+							tmpGRnet.pinRegion.insert(Point3D<int>(pinRegionx, pinRegiony, z));
+					}
                 }
 				else
 				{

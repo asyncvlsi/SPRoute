@@ -1566,8 +1566,10 @@ void SPRoute::checkUsage()
 								}
 								treeedge->route.routelen -= i-j;
 								redsus = true;
-								printf("redundant edge component discovered: netID: %d name: %s edgeid: %d ", netID, nets[netID]->name.c_str(), edgeID);
-								printf(" x: %d y: %d %d %d\n", gridsX[i], gridsY[i], i, j);
+								if(verbose_ > none) {
+									printf("redundant edge component discovered: netID: %d name: %s edgeid: %d ", netID, nets[netID]->name.c_str(), edgeID);
+									printf(" x: %d y: %d %d %d\n", gridsX[i], gridsY[i], i, j);
+								}
 								i = 0;
 								j=0;
 							}

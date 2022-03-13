@@ -66,7 +66,7 @@ void SPRoute::MemPinAdj(int xGrid, int yGrid) {
                         x -= 1;
      
                     int grid3D = y*(xGrid-1)+x+l*(xGrid-1)*yGrid;
-                    if(h_edges3D[grid3D].cap < GLOBAL_CAP_ADJ(hCapacity3D[l], 0, l)) {
+                    if(h_edges3D[grid3D].cap < hCapacity3D[l]) {
                         h_edges3D[grid3D].cap += 1;
                         h_edges3D[grid3D].red -= 1;
                         int grid2D = y * (xGrid - 1) + x;
@@ -83,7 +83,7 @@ void SPRoute::MemPinAdj(int xGrid, int yGrid) {
                     int y = sproute_db::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
                     
                     int grid3D = y*(xGrid-1)+x+l*(xGrid-1)*yGrid;
-                    if(h_edges3D[grid3D].cap < GLOBAL_CAP_ADJ(hCapacity3D[l], 0, l)) {
+                    if(h_edges3D[grid3D].cap < hCapacity3D[l]) {
                         h_edges3D[grid3D].cap += 1;
                         h_edges3D[grid3D].red -= 1;
                         int grid2D = y * (xGrid - 1) + x;
@@ -102,7 +102,7 @@ void SPRoute::MemPinAdj(int xGrid, int yGrid) {
                         y -= 1;
                     
                     int grid3D = y*xGrid + x + l*xGrid*(yGrid-1);
-                    if(v_edges3D[grid3D].cap < GLOBAL_CAP_ADJ(vCapacity3D[l], 0, l)) {
+                    if(v_edges3D[grid3D].cap < vCapacity3D[l]) {
                         v_edges3D[grid3D].cap += 1;
                         v_edges3D[grid3D].red -= 1;
                         int grid2D = y * xGrid + x;
@@ -119,7 +119,7 @@ void SPRoute::MemPinAdj(int xGrid, int yGrid) {
                     int y = sproute_db::find_Gcell(first_rect.lowerLeft.y, defDB.yGcellBoundaries);
                     
                     int grid3D = y*xGrid + x + l*xGrid*(yGrid-1);
-                    if(v_edges3D[grid3D].cap < GLOBAL_CAP_ADJ(vCapacity3D[l], 0, l)) {
+                    if(v_edges3D[grid3D].cap < vCapacity3D[l]) {
                         v_edges3D[grid3D].cap += 1;
                         v_edges3D[grid3D].red -= 1;
                         int grid2D = y * xGrid + x;

@@ -196,7 +196,7 @@ void SPRoute::mazeRouteMSMDDetPart_Astar_Local(int iter, int expand, float costH
                           galois::substrate::PerThreadStorage<THREAD_LOCAL_STORAGE>& thread_local_storage) {
   // LOCK = 0;
   float forange;
-  int astar_weight = 0.0;
+  int astar_weight = 1.0;
   int maze_enlarge = 20;
   float hard_cap_penalty = 10;
   //std::cout << "inside mazeRouteMSMDDetPart_Astar_Local astar_weight: " << astar_weight << endl;

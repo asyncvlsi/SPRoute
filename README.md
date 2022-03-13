@@ -29,4 +29,5 @@
  "make install" creates a folder `sproute` under folder `$ACT_HOME/include` with all .h of PWRoute/include, and a static library `libsproute.a` under folder `$ACT_HOME/lib`.
 
 ### Performance
-If you want to compare runtime of SPRoute, please email hejiayuan19920229@gmail.com for a standalone version of SPRoute.
+This version of SPRoute is different from the one used for SPRoute 1.0 or 2.0. 
+If you want to compare runtime and performance of SPRoute, please email hejiayuan19920229@gmail.com for a standalone version of SPRoute.

@@ -3,6 +3,7 @@
 
 #include "header.h"
 #include "lefDataBase.h"
+#include "writeFile.h"
 
 namespace sproute_db
 {
@@ -154,6 +155,7 @@ public:
 
     std::vector<string> componentNames;
     std::vector<string> pinNames;
+
     Net()
     {
         name = "";

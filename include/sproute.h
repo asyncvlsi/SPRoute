@@ -34,6 +34,7 @@ private:
     float max_rudy;
 
     int verbose_ = 0;
+    bool double_patch_guide_ = true;
 
     void LinkTrackToLayer();
     void PreprocessSpacingTable();
@@ -78,7 +79,7 @@ private:
 
     void WriteGuideToPhydb();
     void WriteGcellGridToPhydb();
-    void WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Point3D<int>>& routedGrid);
+    void WriteRoutedGridToPhydb(int netID, std::set<sproute_db::Routed3DPoint>& routedGrid);
 
     void WriteGuideToFile(string guideFileName);
     void WriteRoutedGrid(FILE* fp, std::set<sproute_db::Point3D<int>>& routedGrid);
@@ -133,7 +134,7 @@ public:
         acc_count = 0;
         max_iteration = 30;
         numThreads = 1;
-        algo = NonDet;
+        algo = Det;
         
         galois::preAlloc(numThreads * 2);
         galois::setActiveThreads(numThreads);
@@ -144,7 +145,7 @@ public:
         acc_count = 0;
         max_iteration = 30;
         numThreads = 1;
-        algo = NonDet;
+        algo = Det;
 
         galois::preAlloc(numThreads * 2);
         galois::setActiveThreads(numThreads);
@@ -155,7 +156,7 @@ public:
         acc_count = 0;
         max_iteration = 30;
         numThreads = 1;
-        algo = NonDet;
+        algo = Det;
         verbose_ = v;
 
         galois::preAlloc(numThreads * 2);
@@ -168,11 +169,15 @@ public:
         max_iteration = 30;
         numThreads = numT;
         algo = sproute::StrToAlgo(algo_str);
+        verbose_ = 0;
 
         galois::preAlloc(numThreads * 2);
         galois::setActiveThreads(numThreads);
     }
 
+    void SetDoublePatchGuide(int double_patch) {
+        double_patch_guide_ = double_patch;
+    }
 
     void SetAlgo(std::string algo_str) {
         algo = sproute::StrToAlgo(algo_str);

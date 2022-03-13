@@ -222,6 +222,12 @@ void SPRoute::LoadPhyDBLayers() {
                 tmpSpacing.parWithin = phydb_eol_spacing.GetParWithin();
                 tmpLayer.spacings.push_back(tmpSpacing);
             }
+            auto phydb_cor_spacing = phydb_layer.GetCornerSpacing();
+            tmpLayer.cornerSpacing.eolWidth = phydb_cor_spacing->GetEOLWidth();
+            for(auto spacing : phydb_cor_spacing->GetSpacing()) 
+                tmpLayer.cornerSpacing.spacing.push_back((float) spacing);
+            for(auto width : phydb_cor_spacing->GetWidth())
+                tmpLayer.cornerSpacing.width.push_back((float) width);
         }
         else if(phydb_layer.GetType() == phydb::LayerType::CUT) {
             tmpLayer.spacing = phydb_layer.GetSpacing();
@@ -485,8 +491,10 @@ void SPRoute::PreprocessSpacingTable()
         for(auto& width : cornerSpacing.width)
             width *= dbuPerMicro;
 
-        for(auto& spacing : cornerSpacing.spacing)
+        for(auto& spacing : cornerSpacing.spacing) {
             spacing *= dbuPerMicro;
+            //std::cout << "corner spacing: " << spacing << std::endl;
+        }
 
 
         //EOL spacing
@@ -969,7 +977,7 @@ void SPRoute::PreprocessDesignRule()
                 int expand = std::max(PRL_expand, EOL_expand);
                 expand = std::max(expand, COR_expand);
                 sproute_db::Rect2D<int> expandRect;
-                if(lefDB.layers.at(i).direction == "HORIZONTAL") {
+                /*if(lefDB.layers.at(i).direction == "HORIZONTAL") {
                     expandRect.lowerLeft.x = rect.lowerLeft.x;
                     expandRect.upperRight.x = rect.upperRight.x;
                     expandRect.lowerLeft.y = rect.lowerLeft.y - expand;
@@ -984,7 +992,11 @@ void SPRoute::PreprocessDesignRule()
                 else {
                     cout << "unknown layer direction: " << lefDB.layers.at(i).direction << endl;
                     exit(1);
-                }
+                }*/
+                expandRect.lowerLeft.x = rect.lowerLeft.x - expand;
+                expandRect.lowerLeft.y = rect.lowerLeft.y - expand;
+                expandRect.upperRight.x = rect.upperRight.x + expand;
+                expandRect.upperRight.y = rect.upperRight.y + expand;
                 defDB.designRuleOBS.at(i).push_back(expandRect);
             }
             else { //standard width wire
@@ -1108,7 +1120,7 @@ void SPRoute::PreprocessDesignRuleOBS()
             int xGcell_end = 0;
             int yGcell_end = 0;
 
-            if(lefDB.layers.at(i).direction == "HORIZONTAL") {
+            /*if(lefDB.layers.at(i).direction == "HORIZONTAL") {
                 xGcell_start = sproute_db::find_Gcell(rect.lowerLeft.x, defDB.xGcellBoundaries);
                 xGcell_end = sproute_db::find_Gcell(rect.upperRight.x, defDB.xGcellBoundaries);
                 yGcell_start = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
@@ -1123,7 +1135,12 @@ void SPRoute::PreprocessDesignRuleOBS()
             else {
                 cout << "unknown layer direction error " << endl;
                 exit(1);
-            }
+            }*/
+
+            xGcell_start = sproute_db::find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
+            yGcell_start = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
+            xGcell_end = sproute_db::find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
+            yGcell_end = sproute_db::find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
             
             if(lefDB.layers.at(i).direction == "HORIZONTAL" && yGcell_end < defDB.gcellGridDim.y - 1)
                 yGcell_end += 1;
@@ -1151,6 +1168,10 @@ void SPRoute::PreprocessDesignRuleOBS()
 
 void SPRoute::GcellInsertOBS(int x, int y, int z, sproute_db::Rect2D<int> rect, int OBSIdx)
 {
+    if(x == 1158 && y == 226 && z == 4) {
+        std::cout << x << " " << y << " " << z << " " << OBSIdx << std::endl;
+        std::cout << rect << std::endl;
+    }
     bool debug = false;
     sproute_db::Gcell& gcell = defDB.getGcell(x, y, z);
     string layerName = lefDB.layers.at(z*2).name;
@@ -1198,8 +1219,8 @@ void SPRoute::GcellInsertOBS(int x, int y, int z, sproute_db::Rect2D<int> rect, 
         if(gcell.numTracks > 15) {
             cout << "numtracks more than 15? " << gcell.numTracks << endl;
             cout << "INFO: direction: " << direction << " gcell lower: " << gcellLower << " gcell upper: " << gcellUpper << endl;
-	    cout << "track start : " << trackStart << " step: " << trackStep << endl;
-	    exit(1);
+	        cout << "track start : " << trackStart << " step: " << trackStep << endl;
+	        exit(1);
         }
         for(int i = 0; i < gcell.numTracks; i++)
         {
@@ -1419,7 +1440,17 @@ void SPRoute::InitGrGen() {
 					int pinx = sproute_db::find_Gcell(x, defDB.xGcellBoundaries);
 					int piny = sproute_db::find_Gcell(y, defDB.yGcellBoundaries);
 					z = lefDB.layer2idx[iopin.layerName] / 2 + 1;
-			        tmpGRnet.pinRegion.insert(sproute_db::Point3D<int>(pinx, piny, z));
+
+                    int xmin = (pinx < 1)? 0 : pinx - 1;
+					int ymin = (piny < 1)? 0 : piny - 1;
+					int xmax = (pinx >= grGen.grid.x - 1)? grGen.grid.x - 1: pinx + 1;
+					int ymax = (piny >= grGen.grid.y - 1)? grGen.grid.y - 1: piny + 1;
+
+					for(int pinRegionx = xmin; pinRegionx <= xmax; pinRegionx++)
+					{
+						for(int pinRegiony = ymin; pinRegiony <= ymax; pinRegiony++)
+							tmpGRnet.pinRegion.insert(sproute_db::Point3D<int>(pinRegionx, pinRegiony, z));
+					}
                 }
 				else
 				{
@@ -1445,15 +1476,15 @@ void SPRoute::InitGrGen() {
 								int trackStep = defDB.tracks.at(trackIdx).step;
 								for(sproute_db::Rect2D<float>& rect: layerRect.rects)
 								{
-									int xmin = sproute_db::find_Gcell(rect.lowerLeft.x, defDB.xGcellBoundaries);
-            						int ymin = sproute_db::find_Gcell(rect.lowerLeft.y, defDB.yGcellBoundaries);
-            						int xmax = sproute_db::find_Gcell(rect.upperRight.x, defDB.xGcellBoundaries);
-            						int ymax = sproute_db::find_Gcell(rect.upperRight.y, defDB.yGcellBoundaries);
+									int xmin = sproute_db::find_Gcell(rect.lowerLeft.x - trackStep, defDB.xGcellBoundaries);
+            						int ymin = sproute_db::find_Gcell(rect.lowerLeft.y - trackStep, defDB.yGcellBoundaries);
+            						int xmax = sproute_db::find_Gcell(rect.upperRight.x + trackStep, defDB.xGcellBoundaries);
+            						int ymax = sproute_db::find_Gcell(rect.upperRight.y + trackStep, defDB.yGcellBoundaries);
 
-                                    xmin = (xmin < 0)? 0 : xmin;
-                                    ymin = (ymin < 0)? 0 : ymin;
-                                    xmax = (xmax >= grGen.grid.x)? grGen.grid.x - 1: xmax;
-                                    ymax = (ymax >= grGen.grid.y)? grGen.grid.y - 1: ymax;
+                                    xmin = (xmin < 1)? 0 : xmin - 1;
+                                    ymin = (ymin < 1)? 0 : ymin - 1;
+                                    xmax = (xmax >= grGen.grid.x - 1)? grGen.grid.x - 1: xmax + 1;
+                                    ymax = (ymax >= grGen.grid.y - 1)? grGen.grid.y - 1: ymax + 1;
             						//if(xmin != xmax || ymin != ymax)
             						//	cout << "Pin covers two gcells: " << net.name << " " << component.name << "/" << pin.name << endl;
                                    

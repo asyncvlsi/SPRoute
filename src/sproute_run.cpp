@@ -16,6 +16,7 @@ void SPRoute::Run() {
     AdjustGcellCap();
 
     InitGrGen();
+
     RunGlobalRoute("", max_iteration, algo);
     if(verbose_ > none)
         std::cout << "routing guides written into phydb" << std::endl;
