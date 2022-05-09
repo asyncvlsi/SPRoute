@@ -297,6 +297,7 @@ void SPRoute::LoadPhyDBTracks() {
 
 void SPRoute::LoadPhyDBIOPins() {
     auto phydb_iopins = db_ptr_->GetDesignPtr()->GetIoPinsRef();
+    auto phydb_nets = db_ptr_->GetDesignPtr()->GetNetsRef();
 
     for(auto phydb_iopin : phydb_iopins) {
         int idx = defDB.iopins.size();
@@ -304,7 +305,7 @@ void SPRoute::LoadPhyDBIOPins() {
 
         tmpIOPin.idx = idx;
         tmpIOPin.name = phydb_iopin.GetName();
-        tmpIOPin.netName = phydb_iopin.GetNetName();
+        tmpIOPin.netName = phydb_nets[phydb_iopin.GetNetId()].GetName();
         tmpIOPin.direction = phydb::SignalDirectionStr(phydb_iopin.GetDirection());
         tmpIOPin.use = phydb::SignalUseStr(phydb_iopin.GetUse());
         tmpIOPin.layerName = phydb_iopin.GetLayerName();
@@ -364,6 +365,7 @@ void SPRoute::LoadPhyDBSNets() {
 void SPRoute::LoadPhyDBNets() {
     auto phydb_nets = db_ptr_->GetDesignPtr()->GetNetsRef();
     auto phydb_comps = db_ptr_->GetDesignPtr()->GetComponentsRef();
+    auto phydb_iopins = db_ptr_->GetDesignPtr()->GetIoPinsRef();
 
     for(auto phydb_net : phydb_nets) {
         int idx = defDB.nets.size();
@@ -372,18 +374,18 @@ void SPRoute::LoadPhyDBNets() {
         tmpNet.name = phydb_net.GetName();
         //tmpNet.use = phydb::SignalUseStr(phydb_net.use_);
 
-        auto phydb_pins_ref = phydb_net.GetPinsRef();
-        auto phydb_iopin_names = phydb_net.GetIoPinNamesRef();
+        auto phydb_pins = phydb_net.GetPinsRef();
+        auto phydb_iopin_ids = phydb_net.GetIoPinIdsRef();
 
-        for(auto phydb_iopin_name : phydb_iopin_names) {
+        for(auto &phydb_iopin_id : phydb_iopin_ids) {
             tmpNet.componentNames.push_back("PIN");
-            tmpNet.pinNames.push_back(phydb_iopin_name);
+            tmpNet.pinNames.push_back(phydb_iopins[phydb_iopin_id].GetName());
         }
 
-        for(int i = 0; i < phydb_pins_ref.size(); i++) {
-            auto& comp = phydb_comps[phydb_pins_ref[i].comp_id];
+        for(auto &phydb_pin: phydb_pins) {
+            auto& comp = phydb_comps[phydb_pin.InstanceId()];
             std::string comp_name = comp.GetName();
-            int pin_id = phydb_pins_ref[i].pin_id;
+            int pin_id = phydb_pin.PinId();
             std::string pin_name = comp.GetMacro()->GetPinsRef()[pin_id].GetName();
             tmpNet.componentNames.push_back(comp_name);
             tmpNet.pinNames.push_back(pin_name);
