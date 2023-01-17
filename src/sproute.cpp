@@ -95,9 +95,9 @@ void SPRoute::LoadPhyDBToLefDB() {
 }
 
 void SPRoute::LoadPhyDBMacros() {
-    auto phydb_macros = db_ptr_->GetTechPtr()->GetMacrosRef();
+    auto &phydb_macros = db_ptr_->GetTechPtr()->GetMacrosRef();
 
-    for(auto phydb_macro : phydb_macros) {
+    for(auto &phydb_macro : phydb_macros) {
         sproute_db::Macro tmpMacro;
         int idx = lefDB.macros.size();
         tmpMacro.name = phydb_macro.GetName();
