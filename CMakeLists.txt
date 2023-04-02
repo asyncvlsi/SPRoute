@@ -143,6 +143,12 @@ message(STATUS "Boost include path: ${Boost_INCLUDE_DIR}")
 message(STATUS "Boost libs: ${Boost_LIBRARIES}")
 include_directories(${Boost_INCLUDE_DIRS})
 
+#
+# This is needed because Boost doesn't auto-detect the C++17 deprecation of
+# std::unary_function and std::binary_function
+#
+add_compile_options("-D_HAS_AUTO_PTR_ETC=0")
+
 # Set a default build type if none was specified
 set(default_build_type "RELEASE")
 if (NOT CMAKE_BUILD_TYPE)
