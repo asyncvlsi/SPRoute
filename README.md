@@ -30,4 +30,4 @@
 
 ### Performance
 This version of SPRoute is different from the one used for SPRoute 1.0 or 2.0. 
-If you want to compare runtime and performance of SPRoute, please email hejiayuan19920229@gmail.com for a standalone version of SPRoute.
+If you want to compare runtime and performance of SPRoute, please email @Michael He (hejiayuan19920229@gmail.com) for a standalone version of SPRoute.
