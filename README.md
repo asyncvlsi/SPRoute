@@ -30,4 +30,4 @@
 
 ### Performance
 This version of SPRoute differs from the ones used for SPRoute 1.0 (ICCAD2019) or 2.0 (ASP-DAC2022). 
-If you want to compare the runtime and performance of SPRoute 1.0/2.0, please email @Michael Jiayuan He (hejiayuan19920229@gmail.com) for a standalone version of SPRoute.
+If you want to compare the runtime and performance of SPRoute 1.0/2.0, please email @Michael Jiayuan He (michaelhe.official@gmail.com) for a standalone version of SPRoute.
